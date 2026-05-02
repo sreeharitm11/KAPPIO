@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { MapPin } from "lucide-react";
 
 interface MapplsMapProps {
   center: { lat: number; lng: number };
@@ -12,109 +13,150 @@ interface MapplsMapProps {
 declare global {
   interface Window {
     mappls: any;
+    mapplsReady: Promise<void>;
+    __mapplsReadyCallback: () => void;
   }
 }
 
-export default function MapplsMap({ 
-  center, 
-  zoom = 15, 
-  onLocationSelect, 
+export default function MapplsMap({
+  center,
+  zoom = 15,
+  onLocationSelect,
   interactive = true,
   tilt = 0,
-  heading = 0
+  heading = 0,
 }: MapplsMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const markerInstance = useRef<any>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapLoading, setMapLoading] = useState(true);
 
   useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 20;
+    let destroyed = false;
 
-    const initMap = () => {
-      if (!mapRef.current) return;
-
-      if (!window.mappls || !window.mappls.Map) {
-        if (retryCount < maxRetries) {
-          retryCount++;
-          setTimeout(initMap, 500);
-        } else {
-          console.error("Mappls SDK failed to load after multiple retries.");
-        }
-        return;
-      }
-
-      // Prevent double initialization
-      if (mapInstance.current) return;
-
+    const init = async () => {
       try {
-        // Initialize Mappls Map
+        // Wait for the SDK to be ready via the callback promise
+        if (window.mapplsReady) {
+          await window.mapplsReady;
+        } else {
+          // Fallback: poll for a max of 10 seconds
+          let waited = 0;
+          while ((!window.mappls || !window.mappls.Map) && waited < 10000) {
+            await new Promise((r) => setTimeout(r, 300));
+            waited += 300;
+          }
+        }
+
+        if (destroyed || !mapRef.current) return;
+
+        if (!window.mappls || !window.mappls.Map) {
+          setMapError("Map API failed to load. Check your API key.");
+          setMapLoading(false);
+          return;
+        }
+
+        // Prevent double initialization
+        if (mapInstance.current) return;
+
         mapInstance.current = new window.mappls.Map(mapRef.current, {
-          center: [center.lat, center.lng],
-          zoom: zoom,
-          tilt: tilt,
-          heading: heading,
+          center: [center.lng, center.lat], // Mappls uses [lng, lat]
+          zoom,
+          tilt,
+          heading,
+          search: false,
         });
 
-        mapInstance.current.on('load', () => {
+        mapInstance.current.on("load", () => {
+          if (destroyed) return;
+          setMapLoading(false);
+
           if (interactive) {
-            // Add a simple pin marker
+            // Draggable pin marker
             markerInstance.current = new window.mappls.Marker({
               map: mapInstance.current,
               position: { lat: center.lat, lng: center.lng },
               draggable: true,
+              fitbounds: false,
             });
 
-            // Update location when marker is dragged
-            markerInstance.current.addListener("dragend", () => {
-              const position = markerInstance.current.getPosition();
-              if (onLocationSelect) {
-                onLocationSelect(position.lat, position.lng);
-              }
+            markerInstance.current.on("dragend", () => {
+              const pos = markerInstance.current.getPosition();
+              if (onLocationSelect) onLocationSelect(pos.lat, pos.lng);
             });
 
-            // Update location when map is clicked
-            mapInstance.current.addListener("click", (e: any) => {
-              const position = e.lngLat;
-              markerInstance.current.setPosition(position);
-              if (onLocationSelect) {
-                onLocationSelect(position.lat, position.lng);
-              }
+            mapInstance.current.on("click", (e: any) => {
+              const { lngLat } = e;
+              markerInstance.current.setPosition({ lat: lngLat.lat, lng: lngLat.lng });
+              if (onLocationSelect) onLocationSelect(lngLat.lat, lngLat.lng);
             });
           } else {
             // Static pin
             new window.mappls.Marker({
               map: mapInstance.current,
               position: { lat: center.lat, lng: center.lng },
+              fitbounds: false,
             });
           }
         });
+
+        // Error on map load failure
+        mapInstance.current.on("error", () => {
+          if (!destroyed) setMapError("Map rendering error. Check API key permissions.");
+          setMapLoading(false);
+        });
       } catch (err) {
-        console.error("Error initializing Mappls Map:", err);
+        console.error("MapplsMap init error:", err);
+        if (!destroyed) {
+          setMapError("Map initialization failed.");
+          setMapLoading(false);
+        }
       }
     };
 
-    initMap();
+    void init();
 
     return () => {
+      destroyed = true;
       if (mapInstance.current) {
         try {
-          if (typeof mapInstance.current.remove === 'function') {
+          if (typeof mapInstance.current.remove === "function") {
             mapInstance.current.remove();
           }
-        } catch (err) {
-          console.error("Error removing Mappls map instance:", err);
+        } catch (_) {
+          // ignore
         }
         mapInstance.current = null;
       }
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (mapError) {
+    return (
+      <div className="w-full h-full rounded-2xl border-2 border-red-200 bg-red-50 flex flex-col items-center justify-center gap-2 text-red-600 p-4">
+        <MapPin className="w-8 h-8 text-red-400" />
+        <p className="text-sm font-medium text-center">{mapError}</p>
+        <p className="text-xs text-red-400 text-center">
+          Verify Mappls API key at maps.mappls.com
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div 
-      ref={mapRef} 
-      className="w-full h-full rounded-2xl overflow-hidden border-2 border-[#E8DCC8] shadow-inner bg-[#F4E8D8]"
-      style={{ minHeight: "300px" }}
-    />
+    <div className="relative w-full h-full">
+      {mapLoading && (
+        <div className="absolute inset-0 z-10 rounded-2xl bg-[#F4E8D8] flex flex-col items-center justify-center gap-3">
+          <div className="w-8 h-8 border-4 border-[#D4A574] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#6B5D52]">Loading map…</p>
+        </div>
+      )}
+      <div
+        ref={mapRef}
+        className="w-full h-full rounded-2xl overflow-hidden"
+        style={{ minHeight: "220px" }}
+      />
+    </div>
   );
 }

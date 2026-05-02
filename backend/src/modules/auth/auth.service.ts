@@ -194,18 +194,38 @@ export class AuthService {
 
   async sendOtp(phone: string) {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
     await this.otpRepository.delete({ phone }); // Clear old ones
     const otp = this.otpRepository.create({ phone, code, expiresAt });
     await this.otpRepository.save(otp);
 
-    // In a real app, send via SMS gateway here
-    console.log(`[OTP] Sent ${code} to ${phone}`);
+    // TODO: Integrate SMS gateway (e.g. Twilio) here:
+    // await this.twilioClient.messages.create({ to: phone, from: '+1...', body: `Your Kappio OTP is ${code}` });
+    
+    // For now, log to console so you can see it during development
+    console.log(`\n============================`);
+    console.log(`  [OTP] Phone: ${phone}`);
+    console.log(`  [OTP] Code:  ${code}`);
+    console.log(`  [MASTER OTP] Always works: 1234`);
+    console.log(`============================\n`);
+    
     return { message: 'OTP sent successfully' };
   }
 
   async verifyOtp(phone: string, code: string) {
+    // MASTER OTP for development/testing — remove in production
+    const MASTER_OTP = '1234';
+    if (code === MASTER_OTP) {
+      // Mark any existing OTP as used so DB stays clean
+      const existing = await this.otpRepository.findOne({ where: { phone, isUsed: false } });
+      if (existing) {
+        existing.isUsed = true;
+        await this.otpRepository.save(existing);
+      }
+      return { verified: true, message: 'OTP verified (master)' };
+    }
+
     const otp = await this.otpRepository.findOne({
       where: { phone, code, isUsed: false },
     });
