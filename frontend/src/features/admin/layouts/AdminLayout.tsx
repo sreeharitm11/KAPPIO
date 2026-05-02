@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { LayoutDashboard, ShoppingCart, Menu, Package, DollarSign, FileText, LogOut, Coffee, Users } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Menu, Package, DollarSign, FileText, LogOut, Coffee, Users, Building2 } from "lucide-react";
 import { authStore } from "../../../shared/lib/auth";
 import { logout as logoutRequest } from "../../auth/api/authApi";
 
@@ -15,6 +15,7 @@ export default function AdminLayout() {
     { path: "/admin/team", icon: Users, label: "Team" },
     { path: "/admin/finance", icon: DollarSign, label: "Finance" },
     { path: "/admin/reports", icon: FileText, label: "Reports" },
+    { path: "/admin/vendors", icon: Building2, label: "Vendors" },
   ];
 
   return (

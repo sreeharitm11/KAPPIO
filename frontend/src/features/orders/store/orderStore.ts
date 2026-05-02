@@ -8,6 +8,7 @@ type OrderStoreState = {
   status: string;
   commentAcknowledged: boolean;
   lastOrderNumber?: string;
+  tableNumber?: string;
 };
 
 const defaultState: OrderStoreState = {
@@ -16,6 +17,7 @@ const defaultState: OrderStoreState = {
   status: 'pending',
   commentAcknowledged: false,
   lastOrderNumber: undefined,
+  tableNumber: undefined,
 };
 
 function readState(): OrderStoreState {

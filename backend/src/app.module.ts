@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { dataSourceOptions } from './config/typeorm.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
@@ -13,9 +14,12 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { UsersModule } from './modules/users/users.module';
+import { VendorsModule } from './modules/vendors/vendors.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -45,6 +49,8 @@ import { UsersModule } from './modules/users/users.module';
     ReportsModule,
     UsersModule,
     NotificationsModule,
+    VendorsModule,
+    InventoryModule,
   ],
 })
 export class AppModule {}

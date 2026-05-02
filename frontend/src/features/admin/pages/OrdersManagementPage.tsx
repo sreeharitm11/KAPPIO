@@ -7,6 +7,34 @@ import { formatCurrency, timeAgo } from "../../../shared/lib/format";
 import type { Order } from "../../../shared/types/api";
 import { printCustomerSaleBill, printKitchenOrderTicket } from "../../../shared/lib/thermal-receipt";
 
+const playBeep = () => {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    
+    const playTone = (freq: number, start: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + start + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + duration);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + duration);
+    };
+
+    // Double beep (Ding-Ding)
+    playTone(880, 0, 0.4);
+    playTone(1046.5, 0.2, 0.4); // C6 note
+  } catch (e) {
+    console.warn("Audio context failed", e);
+  }
+};
+
 export default function OrdersManagementPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [showAlert, setShowAlert] = useState(true);
@@ -32,6 +60,7 @@ export default function OrdersManagementPage() {
         socket = await notificationsSocket.connect();
         if (cancelled || !socket) return;
         socket.on("NEW_ORDER", () => {
+          playBeep();
           setShowAlert(true);
           void loadOrders();
         });
@@ -95,6 +124,11 @@ export default function OrdersManagementPage() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-[#2C1810]">{order.orderNumber}</h3>
+                    {order.tableNumber && (
+                      <span className="px-3 py-1 bg-[#E8DCC8] text-[#2C1810] rounded-lg text-sm font-semibold border border-[#D4A574]/40">
+                        {order.tableNumber}
+                      </span>
+                    )}
                     <span
                       className={`px-4 py-1.5 rounded-full text-sm ${
                         order.status === "PENDING"

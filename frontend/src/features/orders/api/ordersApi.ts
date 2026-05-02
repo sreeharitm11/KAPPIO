@@ -8,6 +8,9 @@ export function createOrder(payload: {
   deliveryAddress: string;
   specialInstructions?: string;
   items: Array<{ menuItemId: string; quantity: number }>;
+  latitude?: number;
+  longitude?: number;
+  deliveryDistance?: number;
 }) {
   return apiRequest<Order>('/orders', {
     method: 'POST',

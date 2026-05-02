@@ -30,6 +30,7 @@ export type MenuItem = {
   description?: string | null;
   price: string;
   available: boolean;
+  isVeg: boolean;
   isPopular: boolean;
   imageUrl?: string | null;
   category: Category;
@@ -44,6 +45,7 @@ export type CartItem = {
   name: string;
   price: number;
   quantity: number;
+  isVeg: boolean;
   imageUrl?: string | null;
   description?: string | null;
   categoryName?: string;
@@ -74,6 +76,9 @@ export type Order = {
   deliveryFee: string;
   totalAmount: string;
   estimatedDeliveryMinutes: number;
+  latitude?: string | null;
+  longitude?: string | null;
+  deliveryDistance?: string | null;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
@@ -177,4 +182,37 @@ export type StaffMember = {
 export type TeamInvitationResult = StaffMember & {
   inviteUrl: string;
   inviteExpiresAt: string;
+};
+
+export type Vendor = {
+  id: string;
+  name: string;
+  contactPerson?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  gstNumber?: string | null;
+  fssaiNumber?: string | null;
+  category?: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type Ingredient = {
+  id: string;
+  name: string;
+  unit: string;
+  currentStock: string;
+  lowStockThreshold: string;
+  lastStockCheckAt?: string;
+};
+
+export type InventoryLog = {
+  id: string;
+  ingredientId: string;
+  changeAmount: string;
+  balanceAfter: string;
+  type: string;
+  remarks?: string;
+  createdAt: string;
 };

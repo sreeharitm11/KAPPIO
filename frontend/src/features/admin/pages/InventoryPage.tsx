@@ -1,226 +1,223 @@
-import { useState } from "react";
-import { Plus, AlertTriangle, Package } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Package, Plus, Minus, History, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { fetchIngredients, updateIngredientStock, fetchIngredientLogs } from "../api/inventoryApi";
+import type { Ingredient, InventoryLog } from "../../../shared/types/api";
 
-const inventoryData = [
-  { id: 1, name: "Tomatoes", quantity: 50, unit: "kg", minStock: 20, lastPurchase: "2026-04-28", price: 40 },
-  { id: 2, name: "Cheese", quantity: 15, unit: "kg", minStock: 25, lastPurchase: "2026-04-30", price: 450 },
-  { id: 3, name: "Chicken", quantity: 30, unit: "kg", minStock: 15, lastPurchase: "2026-05-01", price: 180 },
-  { id: 4, name: "Flour", quantity: 100, unit: "kg", minStock: 40, lastPurchase: "2026-04-25", price: 35 },
-  { id: 5, name: "Onions", quantity: 8, unit: "kg", minStock: 15, lastPurchase: "2026-04-27", price: 30 },
-  { id: 6, name: "Olive Oil", quantity: 25, unit: "L", minStock: 10, lastPurchase: "2026-04-29", price: 600 },
-];
+export default function InventoryPage() {
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
+  const [logs, setLogs] = useState<InventoryLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adjustment, setAdjustment] = useState<number>(0);
+  const [remarks, setRemarks] = useState("");
+  const [success, setSuccess] = useState<string | null>(null);
 
-const purchaseHistory = [
-  { id: 1, date: "2026-05-01", items: "Chicken (30kg)", supplier: "Fresh Meats Co.", total: 5400 },
-  { id: 2, date: "2026-04-30", items: "Cheese (15kg)", supplier: "Dairy Suppliers", total: 6750 },
-  { id: 3, date: "2026-04-29", items: "Olive Oil (25L)", supplier: "Import Foods", total: 15000 },
-];
-
-export default function Inventory() {
-  const [activeTab, setActiveTab] = useState<"stock" | "purchases">("stock");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [purchases, setPurchases] = useState(purchaseHistory);
-  const [formData, setFormData] = useState({ supplier: "", items: "", total: "" });
-
-  const handleAddPurchase = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newPurchase = {
-      id: Date.now(),
-      date: new Date().toISOString().split("T")[0],
-      items: formData.items,
-      supplier: formData.supplier,
-      total: parseFloat(formData.total),
-    };
-    setPurchases([newPurchase, ...purchases]);
-    setShowAddModal(false);
-    setFormData({ supplier: "", items: "", total: "" });
+  const loadData = async () => {
+    try {
+      const data = await fetchIngredients();
+      setIngredients(data);
+    } catch (err) {
+      console.error("Failed to load inventory", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const lowStockItems = inventoryData.filter(item => item.quantity < item.minStock);
+  useEffect(() => {
+    void loadData();
+  }, []);
+
+  const handleSelect = async (ing: Ingredient) => {
+    setSelectedIngredient(ing);
+    setAdjustment(0);
+    setRemarks("");
+    try {
+      const logData = await fetchIngredientLogs(ing.id);
+      setLogs(logData);
+    } catch (err) {
+      console.error("Failed to load logs", err);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedIngredient || adjustment === 0) return;
+    try {
+      await updateIngredientStock(selectedIngredient.id, adjustment, remarks);
+      setSuccess(`Stock updated for ${selectedIngredient.name}`);
+      void loadData();
+      
+      // Refresh logs for the selected ingredient
+      const logData = await fetchIngredientLogs(selectedIngredient.id);
+      setLogs(logData);
+      
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error("Failed to update stock", err);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-[#6B5D52]">Loading inventory...</div>;
 
   return (
     <div className="p-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Inventory Management</h1>
-          <p className="text-muted-foreground mt-1">Track raw materials, stock levels, and purchases</p>
-        </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 w-full md:w-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Add Purchase
-        </button>
+      <div className="mb-8">
+        <h1 className="text-[#2C1810]">Inventory Management</h1>
+        <p className="text-[#6B5D52] mt-1">Track raw materials, stock levels, and manual adjustments</p>
       </div>
 
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
-            <h2 className="text-xl font-bold mb-4">Add Purchase</h2>
-            <form onSubmit={handleAddPurchase} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Supplier Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Items Description</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Milk (20L), Coffee Beans (5kg)"
-                  value={formData.items}
-                  onChange={(e) => setFormData({ ...formData, items: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Total Amount (₹)</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  value={formData.total}
-                  onChange={(e) => setFormData({ ...formData, total: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex gap-3 justify-end mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-5 py-2.5 rounded-xl border font-medium hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700"
-                >
-                  Save Purchase
-                </button>
-              </div>
-            </form>
-          </div>
+      {success && (
+        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5" />
+          {success}
         </div>
       )}
 
-      {lowStockItems.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
-            <div>
-              <h4 className="text-red-900 mb-2">Low Stock Alert</h4>
-              <div className="space-y-1">
-                {lowStockItems.map(item => (
-                  <p key={item.id} className="text-sm text-red-700">
-                    {item.name}: {item.quantity}{item.unit} (Min: {item.minStock}{item.unit})
-                  </p>
-                ))}
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            {ingredients.map((ing) => {
+              const isLow = Number(ing.currentStock) <= Number(ing.lowStockThreshold);
+              return (
+                <button
+                  key={ing.id}
+                  onClick={() => handleSelect(ing)}
+                  className={`text-left p-6 rounded-2xl border-2 transition-all duration-200 ${
+                    selectedIngredient?.id === ing.id
+                      ? "border-[#D4A574] bg-[#FDF8F3] shadow-md"
+                      : "border-[#E8DCC8] bg-white hover:border-[#D4A574]/50"
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-2.5 bg-[#F4E8D8] rounded-xl">
+                      <Package className="w-6 h-6 text-[#B85C3E]" />
+                    </div>
+                    {isLow && (
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full border border-red-100">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        LOW STOCK
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-[#2C1810] font-bold text-lg mb-1">{ing.name}</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-[#B85C3E]">{ing.currentStock}</span>
+                    <span className="text-[#6B5D52] font-medium">{ing.unit}</span>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-[#E8DCC8]/50">
+                    <p className="text-xs text-[#9E8E81] uppercase tracking-wider font-bold">Min Threshold: {ing.lowStockThreshold} {ing.unit}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          
+          {ingredients.length === 0 && (
+            <div className="bg-white rounded-2xl border-2 border-dashed border-[#E8DCC8] p-12 text-center">
+              <Package className="w-16 h-16 text-[#D4A574]/30 mx-auto mb-4" />
+              <h3 className="text-[#2C1810] mb-2">No ingredients found</h3>
+              <p className="text-[#6B5D52]">Run the inventory seed or add ingredients in the database to get started.</p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          {selectedIngredient ? (
+            <div className="bg-white rounded-3xl border-2 border-[#E8DCC8] shadow-2xl p-8 sticky top-8">
+              <h3 className="text-[#2C1810] text-xl font-bold mb-6 flex items-center gap-3">
+                <Plus className="w-6 h-6 text-[#D4A574]" />
+                Adjust Stock
+              </h3>
+              
+              <div className="mb-8 p-4 bg-[#FBF8F3] rounded-2xl border border-[#E8DCC8]">
+                <p className="text-sm text-[#6B5D52] mb-1">Selected Material</p>
+                <p className="text-lg font-bold text-[#2C1810]">{selectedIngredient.name}</p>
+              </div>
+
+              <div className="space-y-8">
+                <div>
+                  <label className="block text-sm font-bold text-[#6B5D52] mb-4 uppercase tracking-widest">
+                    Adjustment Amount ({selectedIngredient.unit})
+                  </label>
+                  <div className="flex items-center gap-6">
+                    <button 
+                      onClick={() => setAdjustment(prev => prev - 1)}
+                      className="w-12 h-12 flex items-center justify-center bg-[#F4E8D8] rounded-2xl hover:bg-[#E8DCC8] transition-colors shadow-sm"
+                    >
+                      <Minus className="w-6 h-6 text-[#2C1810]" />
+                    </button>
+                    <input
+                      type="number"
+                      value={adjustment}
+                      onChange={(e) => setAdjustment(Number(e.target.value))}
+                      className="flex-1 text-center text-3xl font-black bg-transparent border-b-4 border-[#D4A574] py-2 focus:outline-none focus:border-[#B85C3E] text-[#2C1810]"
+                    />
+                    <button 
+                      onClick={() => setAdjustment(prev => prev + 1)}
+                      className="w-12 h-12 flex items-center justify-center bg-[#F4E8D8] rounded-2xl hover:bg-[#E8DCC8] transition-colors shadow-sm"
+                    >
+                      <Plus className="w-6 h-6 text-[#2C1810]" />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#6B5D52] mb-3 uppercase tracking-widest">Remarks</label>
+                  <textarea
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    placeholder="e.g., End of day count, Purchase..."
+                    className="w-full px-5 py-4 border-2 border-[#E8DCC8] rounded-2xl bg-[#FBF8F3] focus:outline-none focus:ring-4 focus:ring-[#D4A574]/20 focus:border-[#D4A574] transition-all resize-none text-[#2C1810]"
+                    rows={3}
+                  />
+                </div>
+
+                <button
+                  onClick={handleUpdate}
+                  disabled={adjustment === 0}
+                  className="w-full bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-[#D4A574]/30 hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+                >
+                  Confirm Adjustment
+                </button>
+
+                <div className="pt-8 border-t-2 border-[#E8DCC8]">
+                  <h4 className="text-sm font-black text-[#2C1810] mb-6 flex items-center gap-2 uppercase tracking-widest">
+                    <History className="w-5 h-5 text-[#D4A574]" />
+                    Activity Logs
+                  </h4>
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-[#D4A574] scrollbar-track-transparent">
+                    {logs.map((log) => (
+                      <div key={log.id} className="p-4 bg-[#FBF8F3] rounded-2xl border border-[#E8DCC8]/50">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className={`font-black text-sm ${Number(log.changeAmount) > 0 ? "text-green-600" : "text-red-600"}`}>
+                            {Number(log.changeAmount) > 0 ? "+" : ""}{log.changeAmount} {selectedIngredient.unit}
+                          </span>
+                          <span className="text-[10px] font-bold text-[#9E8E81] uppercase tracking-tighter">
+                            {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="text-xs text-[#2C1810] font-medium leading-relaxed">
+                          <span className="opacity-60 uppercase text-[9px] mr-1">Type:</span> {log.type}
+                        </div>
+                        {log.remarks && (
+                          <div className="mt-1 text-xs text-[#6B5D52] italic">"{log.remarks}"</div>
+                        )}
+                      </div>
+                    ))}
+                    {logs.length === 0 && <p className="text-center text-sm text-[#9E8E81] py-8">No logs yet</p>}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-[#F4E8D8]/20 border-4 border-dashed border-[#E8DCC8] rounded-[2rem] p-16 text-center h-full flex flex-col justify-center items-center">
+              <div className="p-6 bg-white rounded-full shadow-inner mb-6">
+                <Package className="w-16 h-16 text-[#D4A574] opacity-40" />
+              </div>
+              <h3 className="text-[#2C1810] font-bold mb-2">Select Material</h3>
+              <p className="text-[#6B5D52] max-w-[200px] mx-auto text-sm">Pick an ingredient from the left to adjust stock levels</p>
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="bg-white rounded-lg border border-border shadow-sm">
-        <div className="border-b border-border">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab("stock")}
-              className={`px-6 py-3 transition-colors ${
-                activeTab === "stock"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Stock Levels
-            </button>
-            <button
-              onClick={() => setActiveTab("purchases")}
-              className={`px-6 py-3 transition-colors ${
-                activeTab === "purchases"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Purchase History
-            </button>
-          </div>
-        </div>
-
-        {activeTab === "stock" && (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-border">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Material</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Current Stock</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Min Stock</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Last Purchase</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Price/Unit</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {inventoryData.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 flex items-center gap-2">
-                      <Package className="w-4 h-4 text-gray-400" />
-                      {item.name}
-                    </td>
-                    <td className="px-6 py-4">{item.quantity} {item.unit}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{item.minStock} {item.unit}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{item.lastPurchase}</td>
-                    <td className="px-6 py-4">₹{item.price}/{item.unit}</td>
-                    <td className="px-6 py-4">
-                      {item.quantity < item.minStock ? (
-                        <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
-                          Low Stock
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                          In Stock
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === "purchases" && (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-border">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Date</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Items</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Supplier</th>
-                  <th className="px-6 py-3 text-left text-sm text-gray-600">Total Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {purchases.map((purchase) => (
-                  <tr key={purchase.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">{purchase.date}</td>
-                    <td className="px-6 py-4">{purchase.items}</td>
-                    <td className="px-6 py-4 text-muted-foreground">{purchase.supplier}</td>
-                    <td className="px-6 py-4">₹{purchase.total.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
   );

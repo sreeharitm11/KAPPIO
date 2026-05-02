@@ -7,7 +7,8 @@ import { formatCurrency } from "../../../shared/lib/format";
 export default function CartPage() {
   const [cartItems, setCartItems] = useState(orderStore.getOrder().items);
   const [specialInstructions, setSpecialInstructions] = useState(orderStore.getOrder().specialInstructions);
-  const currentOrder = useMemo(() => orderStore.getOrder(), [cartItems, specialInstructions]);
+  const [tableNumber, setTableNumber] = useState(orderStore.getOrder().tableNumber || "");
+  const currentOrder = useMemo(() => orderStore.getOrder(), [cartItems, specialInstructions, tableNumber]);
 
   const updateQuantity = (menuItemId: string, delta: number) => {
     const existing = cartItems.find((item) => item.menuItemId === menuItemId);
@@ -23,13 +24,12 @@ export default function CartPage() {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = 40;
-  const total = subtotal + deliveryFee;
 
   const handleProceedToCheckout = () => {
     orderStore.updateOrder({
       items: cartItems,
       specialInstructions,
+      tableNumber,
       status: "pending"
     });
   };
@@ -71,7 +71,18 @@ export default function CartPage() {
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="mb-2 text-[#2C1810]">{item.name}</h3>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-[#2C1810] pr-2">{item.name}</h3>
+                  <div 
+                    className={`flex-shrink-0 w-3 h-3 border-2 p-[1px] flex items-center justify-center rounded-[1px] ${
+                      item.isVeg ? 'border-green-600' : 'border-red-600'
+                    }`}
+                  >
+                    <div className={`w-full h-full rounded-full ${
+                      item.isVeg ? 'bg-green-600' : 'bg-red-600'
+                    }`} />
+                  </div>
+                </div>
                 <p className="text-[#B85C3E] mb-3 text-lg">{formatCurrency(item.price)}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 bg-[#F4E8D8] rounded-xl p-1">
@@ -105,15 +116,30 @@ export default function CartPage() {
       <div className="bg-white rounded-2xl border-2 border-[#E8DCC8] p-6 mb-4 shadow-md">
         <div className="flex items-center gap-2 mb-4">
           <MessageSquare className="w-5 h-5 text-[#B85C3E]" />
-          <h3 className="text-[#2C1810]">Special Instructions</h3>
+          <h3 className="text-[#2C1810]">Order Details</h3>
         </div>
-        <textarea
-          value={specialInstructions}
-          onChange={(e) => setSpecialInstructions(e.target.value)}
-          placeholder="Any special requests? (e.g., extra hot, less sugar, no ice...)"
-          rows={3}
-          className="w-full px-4 py-3 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent resize-none bg-[#FBF8F3] text-[#2C1810] placeholder:text-[#6B5D52]"
-        />
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-[#6B5D52] mb-1">Table Number (optional)</label>
+          <input
+            type="text"
+            value={tableNumber}
+            onChange={(e) => setTableNumber(e.target.value)}
+            placeholder="e.g. Table 5"
+            className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent bg-[#FBF8F3] text-[#2C1810]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-[#6B5D52] mb-1">Special Instructions</label>
+          <textarea
+            value={specialInstructions}
+            onChange={(e) => setSpecialInstructions(e.target.value)}
+            placeholder="Any special requests? (e.g., extra hot, less sugar, no ice...)"
+            rows={3}
+            className="w-full px-4 py-3 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent resize-none bg-[#FBF8F3] text-[#2C1810] placeholder:text-[#6B5D52]"
+          />
+        </div>
         {currentOrder.commentAcknowledged && (
           <div className="mt-3 flex items-center gap-2 bg-[#6B9B8F]/10 border border-[#6B9B8F]/30 rounded-lg px-4 py-3">
             <CheckCircle2 className="w-5 h-5 text-[#6B9B8F]" />
@@ -131,11 +157,11 @@ export default function CartPage() {
           </div>
           <div className="flex justify-between text-[#6B5D52]">
             <span>Delivery Fee</span>
-            <span>{formatCurrency(deliveryFee)}</span>
+            <span className="text-sm italic">Calculated at checkout</span>
           </div>
           <div className="border-t-2 border-[#E8DCC8] pt-3 flex justify-between">
-            <span className="text-[#2C1810]">Total</span>
-            <span className="text-[#B85C3E] text-xl">{formatCurrency(total)}</span>
+            <span className="text-[#2C1810]">Subtotal</span>
+            <span className="text-[#B85C3E] text-xl">{formatCurrency(subtotal)}</span>
           </div>
         </div>
       </div>

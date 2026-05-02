@@ -124,6 +124,7 @@ export function buildKitchenOrderTicketHtml(order: Order): string {
   <div class="c sm mt">KITCHEN ORDER (KOT)</div>
   <hr class="sep" />
   <div class="row"><span>Order</span><span class="b">${escapeHtml(order.orderNumber)}</span></div>
+  ${order.tableNumber ? `<div class="row"><span>Table</span><span class="b">${escapeHtml(order.tableNumber)}</span></div>` : ''}
   <div class="row"><span>Time</span><span>${escapeHtml(formatDateTime(order.createdAt))}</span></div>
   <div class="row"><span>Channel</span><span class="b">DELIVERY</span></div>
   <div class="row"><span>Kitchen status</span><span>${escapeHtml(order.status)}</span></div>
@@ -184,9 +185,12 @@ export function buildCustomerSaleBillHtml(order: Order): string {
   ${addrLines ? `<div class="c sm mt">${addrLines}</div>` : ''}
   ${phone ? `<div class="c sm">Ph: ${phone}</div>` : ''}
   ${gst ? `<div class="c sm">GSTIN: ${gst}</div>` : ''}
+  ${e.fssai ? `<div class="c sm">FSSAI: ${escapeHtml(e.fssai)}</div>` : ''}
+  ${e.socials ? `<div class="c sm">@${escapeHtml(e.socials)}</div>` : ''}
   <div class="c sm mt">RETAIL TAX INVOICE / BILL OF SUPPLY</div>
   <hr class="sep" />
   <div class="row sm"><span>Bill No.</span><span class="b">${escapeHtml(order.orderNumber)}</span></div>
+  ${order.tableNumber ? `<div class="row sm"><span>Table</span><span class="b">${escapeHtml(order.tableNumber)}</span></div>` : ''}
   <div class="row sm"><span>Date</span><span>${escapeHtml(formatDateTime(order.createdAt))}</span></div>
   <hr class="sep" />
   <div class="sm"><span class="b">Customer</span><br/>${escapeHtml(order.customerName ?? 'Guest')}</div>
@@ -218,22 +222,49 @@ export function buildCustomerSaleBillHtml(order: Order): string {
 }
 
 export function openThermalPrint(html: string): void {
-  const w = window.open('', '_blank', 'noopener,noreferrer');
-  if (!w) {
-    window.alert('Please allow pop-ups to print receipts.');
+  // Create a hidden iframe
+  const frameId = 'kappio-print-frame';
+  let frame = document.getElementById(frameId) as HTMLIFrameElement;
+  
+  if (!frame) {
+    frame = document.createElement('iframe');
+    frame.id = frameId;
+    frame.style.position = 'fixed';
+    frame.style.right = '0';
+    frame.style.bottom = '0';
+    frame.style.width = '0';
+    frame.style.height = '0';
+    frame.style.border = '0';
+    document.body.appendChild(frame);
+  }
+
+  const doc = frame.contentWindow?.document;
+  if (!doc) {
+    window.alert('Printing error: Iframe document not accessible.');
     return;
   }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
 
-  const delayMs = html.includes('qrserver.com') ? 650 : 280;
-  w.setTimeout(() => {
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  // Wait for images (like QR code) to load before printing
+  const delayMs = html.includes('qrserver.com') ? 1000 : 300;
+  
+  setTimeout(() => {
     try {
-      w.focus();
-      w.print();
-    } finally {
-      w.setTimeout(() => w.close(), 400);
+      frame.contentWindow?.focus();
+      frame.contentWindow?.print();
+    } catch (e) {
+      console.error('Print failed', e);
+      // Fallback for some browsers
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+        w.print();
+      }
     }
   }, delayMs);
 }

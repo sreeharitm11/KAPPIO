@@ -5,10 +5,14 @@ import { trackOrder } from "../../orders/api/ordersApi";
 import { formatCurrency } from "../../../shared/lib/format";
 import type { Order } from "../../../shared/types/api";
 import { printCustomerSaleBill } from "../../../shared/lib/thermal-receipt";
+import { useSearchParams } from "react-router";
+import { Smartphone } from "lucide-react";
 
 export default function OrderConfirmationPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const showQr = searchParams.get("showQr") === "true";
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,10 +60,33 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-[#6B5D52]">Payment Method</span>
-              <span className="text-[#2C1810]">Cash on Delivery</span>
+              <span className="text-[#2C1810]">{showQr ? "UPI Online" : "Cash on Delivery"}</span>
             </div>
           </div>
         </div>
+
+        {showQr && order && (
+          <div className="mb-8 p-6 bg-white border-2 border-[#D4A574] rounded-3xl shadow-inner">
+            <h3 className="text-[#2C1810] mb-4 font-bold">Scan to Pay via UPI</h3>
+            <div className="flex justify-center mb-6">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=Q06322913@ybl&pn=Kappio%20Cafe&am=${order.totalAmount}&cu=INR&tn=Order%20${order.orderNumber}`)}`}
+                alt="UPI QR Code"
+                className="w-48 h-48 border-4 border-white shadow-lg rounded-2xl"
+              />
+            </div>
+            <a
+              href={`upi://pay?pa=Q06322913@ybl&pn=Kappio%20Cafe&am=${order.totalAmount}&cu=INR&tn=Order%20${order.orderNumber}`}
+              className="w-full bg-[#2C1810] text-white px-6 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#3D2418] transition-all"
+            >
+              <Smartphone className="w-5 h-5" />
+              Open in UPI App
+            </a>
+            <p className="text-[10px] text-[#6B5D52] mt-4 uppercase tracking-widest font-bold">
+              Pay via GPay, PhonePe, or Paytm
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div className="bg-[#6B9B8F]/10 border-2 border-[#6B9B8F]/30 rounded-xl p-4">

@@ -11,7 +11,7 @@ export default function MenuManagementPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", price: "", categoryId: "", description: "" });
+  const [formData, setFormData] = useState({ name: "", price: "", categoryId: "", description: "", imageUrl: "" });
   const [loading, setLoading] = useState(false);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -29,13 +29,14 @@ export default function MenuManagementPage() {
           categoryId: formData.categoryId,
           price: parseFloat(formData.price),
           description: formData.description,
+          imageUrl: formData.imageUrl || undefined,
           available: true,
         });
         const menuData = await fetchMenu({ limit: 100 });
         setItems(menuData.items);
       }
       setShowAddModal(false);
-      setFormData({ name: "", price: "", categoryId: "", description: "" });
+      setFormData({ name: "", price: "", categoryId: "", description: "", imageUrl: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -146,6 +147,17 @@ export default function MenuManagementPage() {
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#6B5D52] mb-1">Image URL (Optional)</label>
+                <input
+                  type="url"
+                  value={formData.imageUrl}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
                   className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
                 />
               </div>

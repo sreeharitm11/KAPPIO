@@ -13,13 +13,13 @@ import { Role } from './role.entity';
 
 @Entity('users')
 export class User extends AppBaseEntity {
-  @Column({ name: 'full_name', length: 120 })
+  @Column({ name: 'full_name', type: 'varchar', length: 120 })
   fullName: string;
 
-  @Column({ length: 120, unique: true })
+  @Column({ type: 'varchar', length: 120, unique: true })
   email: string;
 
-  @Column({ length: 30, unique: true })
+  @Column({ type: 'varchar', length: 30, unique: true })
   phone: string;
 
   /** Null until invite is accepted or legacy rows remain hashed */
@@ -41,7 +41,7 @@ export class User extends AppBaseEntity {
   @JoinColumn({ name: 'role_id' })
   role: Role;
 
-  @Column({ name: 'role_id' })
+  @Column({ name: 'role_id', type: 'uuid' })
   roleId: string;
 
   @Column({ default: true })

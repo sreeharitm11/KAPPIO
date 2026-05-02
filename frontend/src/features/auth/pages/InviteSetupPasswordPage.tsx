@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Coffee, KeyRound } from "lucide-react";
+import { Coffee, KeyRound, Eye, EyeOff } from "lucide-react";
 import { apiRequest } from "../../../shared/lib/api-client";
 import { authStore } from "../../../shared/lib/auth";
 import type { SessionUser } from "../../../shared/types/api";
@@ -23,6 +23,7 @@ export default function InviteSetupPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -111,27 +112,38 @@ export default function InviteSetupPasswordPage() {
             <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
               <div>
                 <label className="block text-sm text-[#2C1810] mb-2">New password</label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-[#E8DCC8] bg-[#FBF8F3]"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E8DCC8] bg-[#FBF8F3] pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-[#2C1810]"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm text-[#2C1810] mb-2">Confirm password</label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-[#E8DCC8] bg-[#FBF8F3]"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E8DCC8] bg-[#FBF8F3] pr-12"
+                  />
+                </div>
               </div>
               <button
                 type="submit"

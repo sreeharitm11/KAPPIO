@@ -107,4 +107,20 @@ export class AuthController {
   socketToken(@CurrentUser() user: AuthUser) {
     return this.authService.socketHandshakeToken(user.sub);
   }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('otp/send')
+  sendOtp(@Body('phone') phone: string) {
+    return this.authService.sendOtp(phone);
+  }
+
+  @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('otp/verify')
+  verifyOtp(@Body('phone') phone: string, @Body('otp') otp: string) {
+    return this.authService.verifyOtp(phone, otp);
+  }
 }

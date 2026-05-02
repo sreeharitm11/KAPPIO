@@ -6,6 +6,7 @@ import type { DashboardResponse, TopItemsResponse } from "../../../shared/types/
 
 export default function ReportsPage() {
   const [filter, setFilter] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [anchorDate, setAnchorDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [topItems, setTopItems] = useState<TopItemsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,8 +15,8 @@ export default function ReportsPage() {
     const load = async () => {
       try {
         const [dashboardData, topItemsData] = await Promise.all([
-          fetchDashboard(filter),
-          fetchTopItems(filter),
+          fetchDashboard(filter, anchorDate),
+          fetchTopItems(filter, anchorDate),
         ]);
         setDashboard(dashboardData);
         setTopItems(topItemsData);
@@ -25,15 +26,15 @@ export default function ReportsPage() {
     };
 
     void load();
-  }, [filter]);
+  }, [filter, anchorDate]);
 
   const exportToCSV = async () => {
     try {
-      const file = await exportReport(filter);
+      const file = await exportReport(filter, anchorDate);
       const url = URL.createObjectURL(file.blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `kappio-report-${filter}.csv`;
+      anchor.download = `kappio-report-${filter}-${anchorDate}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (exportError) {
@@ -73,37 +74,32 @@ export default function ReportsPage() {
           </div>
         </div>
         <div className="p-6">
-          <div className="flex gap-3">
-            <button
-              onClick={() => setFilter("daily")}
-              className={`px-6 py-3 rounded-lg transition-colors ${
-                filter === "daily"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Daily
-            </button>
-            <button
-              onClick={() => setFilter("weekly")}
-              className={`px-6 py-3 rounded-lg transition-colors ${
-                filter === "weekly"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Weekly
-            </button>
-            <button
-              onClick={() => setFilter("monthly")}
-              className={`px-6 py-3 rounded-lg transition-colors ${
-                filter === "monthly"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Monthly
-            </button>
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+              {(["daily", "weekly", "monthly"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setFilter(p)}
+                  className={`px-6 py-2.5 rounded-lg transition-all capitalize font-medium ${
+                    filter === p
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 border-l pl-6 border-border">
+              <span className="text-sm font-medium text-gray-600">Reference Date:</span>
+              <input
+                type="date"
+                value={anchorDate}
+                onChange={(e) => setAnchorDate(e.target.value)}
+                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
       </div>

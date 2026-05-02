@@ -62,6 +62,7 @@ export class PaymentsService {
       );
 
       const latestCashbookEntry = await manager.findOne(CashbookEntry, {
+        where: {},
         order: { createdAt: 'DESC' },
       });
       const currentBalance = latestCashbookEntry

@@ -17,6 +17,7 @@ import InventoryPage from "../../features/admin/pages/InventoryPage";
 import FinancePage from "../../features/admin/pages/FinancePage";
 import ReportsPage from "../../features/admin/pages/ReportsPage";
 import TeamStaffPage from "../../features/admin/pages/TeamStaffPage";
+import VendorsManagementPage from "../../features/admin/pages/VendorsManagementPage";
 import CustomerLoginPage from "../../features/auth/pages/CustomerLoginPage";
 import CustomerSignupPage from "../../features/auth/pages/CustomerSignupPage";
 import AdminLoginPage from "../../features/auth/pages/AdminLoginPage";
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
       { path: "team", Component: TeamStaffPage },
       { path: "finance", Component: FinancePage },
       { path: "reports", Component: ReportsPage },
+      { path: "vendors", Component: VendorsManagementPage },
     ],
   },
   {

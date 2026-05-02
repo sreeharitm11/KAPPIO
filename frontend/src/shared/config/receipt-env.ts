@@ -10,6 +10,9 @@ export const receiptEnv = {
     'Your address line 1\nCity, State – PIN',
   shopPhone: import.meta.env.VITE_SHOP_PHONE ?? '',
   gstin: import.meta.env.VITE_SHOP_GSTIN ?? '',
+  fssai: import.meta.env.VITE_SHOP_FSSAI ?? '',
+  /** Instagram or other handle */
+  socials: import.meta.env.VITE_SHOP_SOCIALS ?? '',
   /** Google Maps review URL, WhatsApp, or any URL — encoded into QR on customer bill */
   reviewQrUrl: import.meta.env.VITE_REVIEW_QR_URL ?? '',
   /** Shown when no review URL is set */

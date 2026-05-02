@@ -16,4 +16,9 @@ export class NotificationsService {
     this.logger.log(`Mock WhatsApp notification sent to ${phone}: ${message}`);
     return { phone, message, sent: true, provider: 'mock' };
   }
+
+  async sendSystemAlert(title: string, message: string) {
+    this.logger.warn(`SYSTEM ALERT: ${title} - ${message}`);
+    this.emit(SocketEvent.SYSTEM_ALERT, { title, message });
+  }
 }

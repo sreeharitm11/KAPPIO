@@ -1,5 +1,6 @@
+import { ArrowRight, Coffee, Leaf, MapPin } from "lucide-react";
 import { Link } from "react-router";
-import { ArrowRight, Coffee, Leaf } from "lucide-react";
+import Footer from "../../../shared/components/Footer";
 
 export default function LandingPage() {
   return (
@@ -34,12 +35,12 @@ export default function LandingPage() {
             Small-batch coffee &amp; fresh bites
           </p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight tracking-tight mb-6">
-            Order your favourites,
-            <span className="block text-[#D4A574] mt-1">delivered to your door.</span>
+            Artisanal coffee & fresh bites,
+            <span className="block text-[#D4A574] mt-1">delivered straight to your doorstep.</span>
           </h1>
           <p className="text-lg text-[#C4B5A8] max-w-lg mb-10 leading-relaxed">
-            Browse our menu, customise your cart, and pay on delivery. Fast updates from our kitchen
-            to your neighbourhood.
+            Experience the perfect blend of quality and convenience. Browse our curated menu, 
+            crafted for those who appreciate the finer details in every sip and bite.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
@@ -70,7 +71,7 @@ export default function LandingPage() {
                 <p className="text-[#A89888] text-sm">Roasted in-house, packed with care.</p>
               </div>
             </div>
-            <ul className="space-y-4 text-[#D4C4B8] text-sm">
+            <ul className="space-y-4 text-[#D4C4B8] text-sm mb-8">
               <li className="flex justify-between border-b border-white/10 pb-3">
                 <span>Artisan espresso &amp; filter coffee</span>
                 <span className="text-[#D4A574]">Popular</span>
@@ -84,13 +85,34 @@ export default function LandingPage() {
                 <span className="text-[#D4A574]">Live</span>
               </li>
             </ul>
+
+            <div className="pt-6 border-t border-white/10">
+              <h3 className="text-sm font-bold text-[#D4A574] uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Leaf className="w-4 h-4" />
+                Vegetarian Delights
+              </h3>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {[
+                  { name: "Avocado Toast", price: "₹240" },
+                  { name: "Mushroom Melt", price: "₹280" },
+                  { name: "Paneer Wrap", price: "₹220" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex-shrink-0 bg-white/5 border border-white/10 rounded-xl p-3 w-32">
+                    <div className="w-4 h-4 border border-green-600 p-[1px] flex items-center justify-center rounded-[1px] mb-2">
+                      <div className="w-full h-full bg-green-600 rounded-full" />
+                    </div>
+                    <p className="text-xs font-bold truncate">{item.name}</p>
+                    <p className="text-[10px] text-[#D4A574]">{item.price}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-white/10 py-8 text-center text-sm text-[#8A7A6E]">
-        <p>© {new Date().getFullYear()} Kappio Café · Crafted for coffee lovers</p>
-      </footer>
+      <Footer />
     </div>
   );
 }
+

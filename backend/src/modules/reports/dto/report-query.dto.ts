@@ -8,4 +8,8 @@ export class ReportQueryDto {
   @IsOptional()
   @IsDateString()
   anchorDate?: string;
+
+  @IsOptional()
+  @IsEnum(['SALES', 'CASHBOOK'])
+  type?: 'SALES' | 'CASHBOOK';
 }

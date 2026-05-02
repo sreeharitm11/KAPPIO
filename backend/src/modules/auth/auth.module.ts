@@ -4,15 +4,17 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Role } from '../../database/entities/role.entity';
 import { User } from '../../database/entities/user.entity';
+import { Otp } from '../../database/entities/otp.entity';
 import { AuthCookiesService } from './auth-cookies.service';
 import { AuthTokensService } from './auth-tokens.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { SeedService } from './seed.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role]),
+    TypeOrmModule.forFeature([User, Role, Otp]),
     ConfigModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -28,7 +30,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, AuthTokensService, AuthCookiesService],
+  providers: [AuthService, JwtStrategy, AuthTokensService, AuthCookiesService, SeedService],
   exports: [AuthService, AuthTokensService],
 })
 export class AuthModule {}

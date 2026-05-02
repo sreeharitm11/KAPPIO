@@ -149,6 +149,7 @@ export class FinanceService {
 
   private async getCurrentBalance(): Promise<number> {
     const latestEntry = await this.cashbookRepository.findOne({
+      where: {},
       order: {
         createdAt: 'DESC',
       },

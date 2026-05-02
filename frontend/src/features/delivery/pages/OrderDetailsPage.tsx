@@ -45,13 +45,13 @@ export default function OrderDetailsPage() {
   };
 
   const specialInstructions = order.specialInstructions || "";
-  const locationMatch = specialInstructions.match(/Live Location: (https:\/\/mappls\.com\/\?q=[-\d.,]+)/);
-  const locationLink = locationMatch ? locationMatch[1] : null;
-  const commentsOnly = specialInstructions.replace(/Live Location: https:\/\/mappls\.com\/\?q=[-\d.,]+/, '').trim();
+  const locationMatch = specialInstructions.match(/Location: ([-\d.]+,[-\d.]+)/);
+  const locationCoords = locationMatch ? locationMatch[1] : null;
+  const commentsOnly = specialInstructions.replace(/Location: [-\d.]+,[-\d.]+/, '').trim();
 
   const handleOpenMaps = () => {
-    if (locationLink) {
-      window.open(locationLink, "_blank");
+    if (locationCoords) {
+      window.open(`https://mappls.com/?q=${locationCoords}`, "_blank");
     } else {
       const encodedAddress = encodeURIComponent(order.deliveryAddress);
       window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");

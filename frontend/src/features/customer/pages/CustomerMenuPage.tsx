@@ -14,6 +14,7 @@ export default function CustomerMenuPage() {
   const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [vegOnly, setVegOnly] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -43,7 +44,8 @@ export default function CustomerMenuPage() {
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = selectedCategory === "All" || item.category.name === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesVeg = !vegOnly || item.isVeg;
+    return matchesCategory && matchesSearch && matchesVeg;
   });
 
   const addToCart = (item: MenuItem) => {
@@ -84,21 +86,36 @@ export default function CustomerMenuPage() {
         </div>
       </div>
 
-      <div className="px-4 mb-6 overflow-x-auto">
-        <div className="flex gap-3 pb-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-5 py-2.5 rounded-full whitespace-nowrap transition-all duration-200 ${
-                selectedCategory === category
-                  ? "bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white shadow-lg"
-                  : "bg-white text-[#2C1810] border-2 border-[#E8DCC8] hover:border-[#D4A574]"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+      <div className="px-4 mb-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide flex-1">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-5 py-2.5 rounded-full whitespace-nowrap transition-all duration-200 ${
+                  selectedCategory === category
+                    ? "bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white shadow-lg"
+                    : "bg-white text-[#2C1810] border-2 border-[#E8DCC8] hover:border-[#D4A574]"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setVegOnly(!vegOnly)}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-200 ${
+              vegOnly 
+                ? "bg-green-50 border-green-600 text-green-700 font-bold" 
+                : "bg-white border-[#E8DCC8] text-[#6B5D52]"
+            }`}
+          >
+            <div className={`w-4 h-4 border-2 p-[2px] rounded-[2px] ${vegOnly ? 'border-green-600' : 'border-gray-400'}`}>
+              <div className={`w-full h-full rounded-full ${vegOnly ? 'bg-green-600' : 'bg-transparent'}`} />
+            </div>
+            Veg Only
+          </button>
         </div>
       </div>
 
@@ -114,7 +131,15 @@ export default function CustomerMenuPage() {
             <div className="p-5 flex gap-4">
               <div className="w-24 h-24 bg-gradient-to-br from-[#F4E8D8] to-[#E8DCC8] rounded-xl flex items-center justify-center text-5xl relative overflow-hidden">
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded-xl" />
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover rounded-xl" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = ""; // Clear source
+                      (e.target as HTMLImageElement).parentElement!.innerHTML = "🍽️"; // Fallback to emoji
+                    }}
+                  />
                 ) : (
                   "🍽️"
                 )}
@@ -125,11 +150,18 @@ export default function CustomerMenuPage() {
                 )}
               </div>
               <div className="flex-1">
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="text-[#2C1810]">{item.name}</h3>
-                  {item.isPopular && (
-                    <span className="text-xs bg-[#B85C3E] text-white px-2 py-1 rounded-full">Popular</span>
-                  )}
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-[#2C1810] pr-2">{item.name}</h3>
+                  <div 
+                    className={`flex-shrink-0 w-4 h-4 border-2 p-[2px] flex items-center justify-center rounded-[2px] ${
+                      item.isVeg ? 'border-green-600' : 'border-red-600'
+                    }`}
+                    title={item.isVeg ? 'Veg' : 'Non-Veg'}
+                  >
+                    <div className={`w-full h-full rounded-full ${
+                      item.isVeg ? 'bg-green-600' : 'bg-red-600'
+                    }`} />
+                  </div>
                 </div>
                 <p className="text-sm text-[#6B5D52] mb-3 leading-relaxed">{item.description}</p>
                 <div className="flex items-center justify-between">

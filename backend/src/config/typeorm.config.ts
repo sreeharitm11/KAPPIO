@@ -9,7 +9,12 @@ import { MenuItem } from '../database/entities/menu-item.entity';
 import { OrderItem } from '../database/entities/order-item.entity';
 import { Order } from '../database/entities/order.entity';
 import { Role } from '../database/entities/role.entity';
+import { Otp } from '../database/entities/otp.entity';
 import { User } from '../database/entities/user.entity';
+import { Vendor } from '../database/entities/vendor.entity';
+import { Ingredient } from '../database/entities/ingredient.entity';
+import { MenuItemIngredient } from '../database/entities/menu-item-ingredient.entity';
+import { InventoryLog } from '../database/entities/inventory-log.entity';
 
 export const dataSourceOptions = (
   configService: ConfigService,
@@ -17,7 +22,7 @@ export const dataSourceOptions = (
   type: 'postgres',
   url: configService.get<string>('DATABASE_URL'),
   autoLoadEntities: false,
-  synchronize: false,
+  synchronize: true,
   logging: false,
   entities: [
     Role,
@@ -30,5 +35,10 @@ export const dataSourceOptions = (
     CashCollection,
     CashbookEntry,
     Expense,
+    Vendor,
+    Otp,
+    Ingredient,
+    MenuItemIngredient,
+    InventoryLog,
   ],
 });

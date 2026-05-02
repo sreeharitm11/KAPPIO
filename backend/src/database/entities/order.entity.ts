@@ -10,7 +10,7 @@ import { User } from './user.entity';
 
 @Entity('orders')
 export class Order extends AppBaseEntity {
-  @Column({ name: 'order_number', unique: true, length: 30 })
+  @Column({ name: 'order_number', type: 'varchar', unique: true, length: 30 })
   orderNumber: string;
 
   @Column({ name: 'customer_id', type: 'uuid', nullable: true })
@@ -23,11 +23,14 @@ export class Order extends AppBaseEntity {
   @Column({ name: 'customer_name', type: 'varchar', length: 120, nullable: true })
   customerName?: string | null;
 
-  @Column({ name: 'customer_phone', length: 30 })
+  @Column({ name: 'customer_phone', type: 'varchar', length: 30 })
   customerPhone: string;
 
   @Column({ name: 'delivery_address', type: 'text' })
   deliveryAddress: string;
+
+  @Column({ name: 'table_number', type: 'varchar', length: 20, nullable: true })
+  tableNumber?: string | null;
 
   @Column({
     type: 'enum',
@@ -55,7 +58,7 @@ export class Order extends AppBaseEntity {
   @Column({ name: 'special_instructions', type: 'text', nullable: true })
   specialInstructions?: string | null;
 
-  @Column({ name: 'comment_acknowledged', default: false })
+  @Column({ name: 'comment_acknowledged', type: 'boolean', default: false })
   commentAcknowledged: boolean;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
@@ -67,7 +70,7 @@ export class Order extends AppBaseEntity {
   @Column({ name: 'total_amount', type: 'numeric', precision: 10, scale: 2 })
   totalAmount: string;
 
-  @Column({ name: 'estimated_delivery_minutes', default: 30 })
+  @Column({ name: 'estimated_delivery_minutes', type: 'integer', default: 30 })
   estimatedDeliveryMinutes: number;
 
   @Column({ name: 'assigned_by_id', type: 'uuid', nullable: true })
@@ -79,6 +82,15 @@ export class Order extends AppBaseEntity {
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
   items: OrderItem[];
+
+  @Column({ name: 'latitude', type: 'numeric', precision: 10, scale: 7, nullable: true })
+  latitude?: string | null;
+
+  @Column({ name: 'longitude', type: 'numeric', precision: 10, scale: 7, nullable: true })
+  longitude?: string | null;
+
+  @Column({ name: 'delivery_distance', type: 'numeric', precision: 5, scale: 2, nullable: true })
+  deliveryDistance?: string | null;
 
   @OneToOne(() => DeliveryAssignment, (assignment) => assignment.order)
   deliveryAssignment?: DeliveryAssignment;

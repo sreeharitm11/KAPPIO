@@ -7,6 +7,7 @@ import {
   Length,
   MaxLength,
   Min,
+  IsNumber,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -40,6 +41,11 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(20)
+  tableNumber?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(500)
   specialInstructions?: string;
 
@@ -48,6 +54,18 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  deliveryDistance?: number;
 }
 
 export { CreateOrderItemDto };

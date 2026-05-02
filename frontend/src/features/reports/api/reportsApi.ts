@@ -8,20 +8,26 @@ import type {
   TopItemsResponse,
 } from '../../../shared/types/api';
 
-export function fetchDashboard(period: 'daily' | 'weekly' | 'monthly') {
-  return apiRequest<DashboardResponse>(`/reports/dashboard?period=${period}`, {
+export function fetchDashboard(period: 'daily' | 'weekly' | 'monthly', anchorDate?: string) {
+  const query = new URLSearchParams({ period });
+  if (anchorDate) query.set('anchorDate', anchorDate);
+  return apiRequest<DashboardResponse>(`/reports/dashboard?${query.toString()}`, {
     auth: true,
   });
 }
 
-export function fetchTopItems(period: 'daily' | 'weekly' | 'monthly') {
-  return apiRequest<TopItemsResponse>(`/reports/top-items?period=${period}`, {
+export function fetchTopItems(period: 'daily' | 'weekly' | 'monthly', anchorDate?: string) {
+  const query = new URLSearchParams({ period });
+  if (anchorDate) query.set('anchorDate', anchorDate);
+  return apiRequest<TopItemsResponse>(`/reports/top-items?${query.toString()}`, {
     auth: true,
   });
 }
 
-export function exportReport(period: 'daily' | 'weekly' | 'monthly') {
-  return downloadWithAuth(`/reports/export?period=${period}`);
+export function exportReport(period: 'daily' | 'weekly' | 'monthly', anchorDate?: string) {
+  const query = new URLSearchParams({ period });
+  if (anchorDate) query.set('anchorDate', anchorDate);
+  return downloadWithAuth(`/reports/export?${query.toString()}`);
 }
 
 export function fetchFinanceSummary() {

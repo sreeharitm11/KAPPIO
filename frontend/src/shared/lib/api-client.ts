@@ -117,3 +117,14 @@ export async function logoutApi(): Promise<void> {
   }).catch(() => undefined);
   authStore.clear();
 }
+
+export const api = {
+  get: <T>(path: string, options?: RequestOptions) => 
+    apiRequest<T>(path, { ...options, method: 'GET' }),
+  post: <T>(path: string, body?: any, options?: RequestOptions) => 
+    apiRequest<T>(path, { ...options, method: 'POST', body: JSON.stringify(body) }),
+  patch: <T>(path: string, body?: any, options?: RequestOptions) => 
+    apiRequest<T>(path, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
+  delete: <T>(path: string, options?: RequestOptions) => 
+    apiRequest<T>(path, { ...options, method: 'DELETE' }),
+};

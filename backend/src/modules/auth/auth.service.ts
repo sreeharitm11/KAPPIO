@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { Role } from '../../database/entities/role.entity';
 import { User } from '../../database/entities/user.entity';
+import { Otp } from '../../database/entities/otp.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
@@ -24,6 +25,8 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly rolesRepository: Repository<Role>,
+    @InjectRepository(Otp)
+    private readonly otpRepository: Repository<Otp>,
     private readonly authTokensService: AuthTokensService,
   ) {}
 
@@ -187,5 +190,36 @@ export class AuthService {
     const payload = this.buildUserPayload(user);
     const accessToken = await this.authTokensService.signAccess(payload);
     return { token: accessToken };
+  }
+
+  async sendOtp(phone: string) {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+
+    await this.otpRepository.delete({ phone }); // Clear old ones
+    const otp = this.otpRepository.create({ phone, code, expiresAt });
+    await this.otpRepository.save(otp);
+
+    // In a real app, send via SMS gateway here
+    console.log(`[OTP] Sent ${code} to ${phone}`);
+    return { message: 'OTP sent successfully' };
+  }
+
+  async verifyOtp(phone: string, code: string) {
+    const otp = await this.otpRepository.findOne({
+      where: { phone, code, isUsed: false },
+    });
+
+    if (!otp) {
+      return { verified: false, message: 'Invalid OTP' };
+    }
+
+    if (otp.expiresAt.getTime() < Date.now()) {
+      return { verified: false, message: 'OTP expired' };
+    }
+
+    otp.isUsed = true;
+    await this.otpRepository.save(otp);
+    return { verified: true, message: 'OTP verified' };
   }
 }
