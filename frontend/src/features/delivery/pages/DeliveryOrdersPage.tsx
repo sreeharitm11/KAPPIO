@@ -118,6 +118,7 @@ export default function DeliveryOrdersPage() {
           <p className="text-[#6B5D52]">Check back soon for new deliveries</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
