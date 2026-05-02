@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kappio Café — Artisanal Coffee & Fresh Bites</title>
     <meta name="description" content="Order freshly brewed artisan coffee and delicious bites from Kappio Café. Fast delivery to your doorstep." />
-    <!-- Mappls Map CSS -->
-    <link rel="stylesheet" href="https://apis.mappls.com/advancedmaps/v1/yttlmtxaxsfrvnbjfxwhlpnhkamvzvaqqops/map_load?v=3.0" />
-    <!-- Mappls Map SDK v3 (deferred, with callback) -->
+    <!-- Mappls Map SDK v3 with callback for async readiness detection -->
     <script>
       window.mapplsReady = new Promise(function(resolve) {
         window.__mapplsReadyCallback = resolve;
@@ -15,7 +13,7 @@
     </script>
     <script
       src="https://apis.mappls.com/advancedmaps/api/yttlmtxaxsfrvnbjfxwhlpnhkamvzvaqqops/map_sdk?v=3.0&layer=vector&libraries=distance&callback=__mapplsReadyCallback"
-      defer
+      async
     ></script>
   </head>
   <body>
