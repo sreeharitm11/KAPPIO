@@ -22,22 +22,28 @@ export default function DeliveryOrdersPage() {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#2C1810]">Assigned Orders</h1>
-        <p className="text-[#6B5D52] mt-1">{assignedOrders.length} deliveries pending</p>
-        {error && <p className="text-red-600 mt-2">{error}</p>}
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-xl p-6 border border-[#E8DCC8] shadow-sm">
-          <p className="text-sm text-[#6B5D52] mb-1">Today's Deliveries</p>
-          <h2 className="text-3xl font-bold text-[#2C1810] mb-1">{assignedOrders.length}</h2>
-          <p className="text-sm text-[#B85C3E]">Live assignment count</p>
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-gradient-to-br from-[#B85C3E] via-[#D4A574] to-[#6B9B8F] text-white p-8 mb-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16" />
+        <div className="relative">
+          <h1 className="mb-2 text-3xl">Assigned Orders</h1>
+          <p className="opacity-90 text-lg">{assignedOrders.length} deliveries pending</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-[#E8DCC8] shadow-sm">
-          <p className="text-sm text-[#6B5D52] mb-1">Earnings Today</p>
-          <h2 className="text-3xl font-bold text-[#B85C3E] mb-1">
+      </div>
+      
+      <div className="px-4">
+        {error && <p className="text-red-600 mb-4">{error}</p>}
+
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-2xl p-6 border-2 border-[#E8DCC8] shadow-md hover:shadow-lg transition-all duration-300">
+          <p className="text-sm font-semibold text-[#6B5D52] uppercase tracking-wider mb-2">Today's Deliveries</p>
+          <h2 className="text-4xl font-bold text-[#2C1810] mb-1">{assignedOrders.length}</h2>
+          <p className="text-sm font-medium text-[#B85C3E]">Live assignment count</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border-2 border-[#E8DCC8] shadow-md hover:shadow-lg transition-all duration-300">
+          <p className="text-sm font-semibold text-[#6B5D52] uppercase tracking-wider mb-2">Earnings Today</p>
+          <h2 className="text-4xl font-bold text-[#B85C3E] mb-1">
             {formatCurrency(
               assignedOrders
                 .filter((entry) => entry.status === "DELIVERED")
@@ -48,10 +54,10 @@ export default function DeliveryOrdersPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {assignedOrders.map((order) => (
-          <div key={order.id} className="bg-white rounded-xl border border-[#E8DCC8] shadow-sm overflow-hidden transition-all hover:shadow-md">
-            <div className="p-4 border-b border-[#E8DCC8] flex items-center justify-between bg-[#FBF8F3]">
+          <div key={order.id} className="bg-white rounded-2xl border-2 border-[#E8DCC8] shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden hover:-translate-y-1">
+            <div className="p-5 flex items-center justify-between bg-[#FBF8F3] border-b-2 border-[#E8DCC8]">
               <div>
                 <h3 className="text-lg font-bold text-[#2C1810]">Order #{order.order.orderNumber}</h3>
                 <p className="text-sm text-[#6B5D52] flex items-center gap-1 mt-1">
@@ -60,7 +66,7 @@ export default function DeliveryOrdersPage() {
                 </p>
               </div>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
+                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${
                   order.status === "ASSIGNED"
                     ? "bg-[#E8DCC8] text-[#6B4423]"
                     : "bg-[#D4A574] text-[#2C1810]"
@@ -70,31 +76,31 @@ export default function DeliveryOrdersPage() {
               </span>
             </div>
 
-            <div className="p-4 space-y-3">
+            <div className="p-5 space-y-4">
               <div>
-                <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider mb-1">Customer</p>
-                <p className="text-[#2C1810] font-medium">{order.order.customerName ?? "Walk-in Customer"}</p>
-                <p className="text-sm text-[#6B5D52]">{order.order.customerPhone}</p>
+                <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider mb-1">Customer</p>
+                <p className="text-lg text-[#2C1810] font-semibold">{order.order.customerName ?? "Walk-in Customer"}</p>
+                <p className="text-sm font-medium text-[#6B5D52]">{order.order.customerPhone}</p>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   Delivery Address
                 </p>
-                <p className="text-sm text-[#2C1810]">{order.order.deliveryAddress}</p>
+                <p className="text-base text-[#2C1810]">{order.order.deliveryAddress}</p>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-[#E8DCC8]">
+              <div className="flex items-center justify-between pt-4 border-t-2 border-[#E8DCC8]">
                 <div>
                   <p className="text-sm text-[#6B5D52]">
                     {order.order.items.length} items
                   </p>
-                  <p className="font-bold text-[#B85C3E] mt-1">{formatCurrency(order.order.totalAmount)}</p>
+                  <p className="font-bold text-xl text-[#B85C3E] mt-1">{formatCurrency(order.order.totalAmount)}</p>
                 </div>
                 <Link
                   to={`/deliverypartner/order/${order.order.id}`}
-                  className="bg-[#B85C3E] text-[#FBF8F3] px-5 py-2.5 rounded-lg hover:bg-[#8A432D] transition-colors flex items-center gap-2 font-medium shadow-sm"
+                  className="bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-medium hover:scale-105"
                 >
                   View Details
                   <ArrowRight className="w-4 h-4" />
@@ -106,7 +112,7 @@ export default function DeliveryOrdersPage() {
       </div>
 
       {assignedOrders.length === 0 && (
-        <div className="bg-white rounded-xl border border-[#E8DCC8] p-12 text-center shadow-sm">
+        <div className="bg-white rounded-2xl border-2 border-[#E8DCC8] p-12 text-center shadow-md">
           <Package className="w-16 h-16 mx-auto mb-4 text-[#D4A574]/50" />
           <h3 className="text-xl font-bold text-[#2C1810] mb-2">No orders assigned</h3>
           <p className="text-[#6B5D52]">Check back soon for new deliveries</p>

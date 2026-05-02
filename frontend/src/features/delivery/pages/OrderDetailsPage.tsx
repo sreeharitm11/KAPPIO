@@ -33,8 +33,8 @@ export default function OrderDetailsPage() {
   if (!order) {
     return (
       <div className="max-w-2xl mx-auto p-4">
-        <div className="bg-white rounded-xl border border-[#E8DCC8] p-8 text-center shadow-sm">
-          <h2 className="text-[#2C1810]">{error ?? "Order not found"}</h2>
+        <div className="bg-white rounded-2xl border-2 border-[#E8DCC8] p-8 text-center shadow-md">
+          <h2 className="text-[#2C1810] text-xl font-bold">{error ?? "Order not found"}</h2>
         </div>
       </div>
     );
@@ -80,20 +80,20 @@ export default function OrderDetailsPage() {
         <p className="text-[#6B5D52] mt-1">Delivery details and navigation</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E8DCC8] shadow-sm mb-4 overflow-hidden">
-        <div className="p-4 border-b border-[#E8DCC8] bg-[#FBF8F3]">
+      <div className="bg-white rounded-2xl border-2 border-[#E8DCC8] shadow-md mb-6 overflow-hidden">
+        <div className="p-5 border-b-2 border-[#E8DCC8] bg-[#FBF8F3]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#D4A574]" />
-              <span className="font-semibold text-[#2C1810]">Order Status</span>
+              <Package className="w-6 h-6 text-[#D4A574]" />
+              <span className="font-bold text-[#2C1810] text-lg">Order Status</span>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${
                 status === "ASSIGNED"
                   ? "bg-[#E8DCC8] text-[#6B4423]"
                   : status === "PICKED_UP"
                   ? "bg-[#D4A574] text-[#2C1810]"
-                  : "bg-white border border-[#E8DCC8] text-[#6B5D52]"
+                  : "bg-white border-2 border-[#E8DCC8] text-[#6B5D52]"
               }`}
             >
               {status === "ASSIGNED" ? "Ready for Pickup" : status === "PICKED_UP" ? "In Transit" : "Delivered"}
@@ -101,19 +101,19 @@ export default function OrderDetailsPage() {
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-5 space-y-5">
           <div>
-            <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider mb-1">Customer Name</p>
-            <h3 className="text-lg font-medium text-[#2C1810]">{order.customerName ?? "Walk-in Customer"}</h3>
+            <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider mb-1">Customer Name</p>
+            <h3 className="text-xl font-bold text-[#2C1810]">{order.customerName ?? "Walk-in Customer"}</h3>
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider mb-1">Phone Number</p>
+            <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider mb-1">Phone Number</p>
             <div className="flex items-center justify-between">
-              <p className="text-[#2C1810]">{order.customerPhone}</p>
+              <p className="text-lg font-medium text-[#2C1810]">{order.customerPhone}</p>
               <button
                 onClick={handleCallCustomer}
-                className="bg-[#2C1810] text-[#D4A574] px-4 py-2 rounded-lg hover:bg-[#3A2618] transition-colors flex items-center gap-2 font-medium"
+                className="bg-[#2C1810] text-[#D4A574] px-5 py-2.5 rounded-xl hover:bg-[#3A2618] transition-colors flex items-center gap-2 font-bold shadow-md hover:-translate-y-0.5"
               >
                 <Phone className="w-4 h-4" />
                 Call
@@ -122,49 +122,49 @@ export default function OrderDetailsPage() {
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider mb-1 flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
+            <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider mb-1 flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
               Delivery Address
             </p>
-            <p className="mb-3 text-[#2C1810]">{order.deliveryAddress}</p>
+            <p className="mb-4 text-lg text-[#2C1810]">{order.deliveryAddress}</p>
             <button
               onClick={handleOpenMaps}
-              className="w-full bg-[#6B4423] text-[#FBF8F3] px-4 py-3 rounded-lg hover:bg-[#3A2618] transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
+              className="w-full bg-[#6B4423] text-[#FBF8F3] px-5 py-3.5 rounded-xl hover:bg-[#3A2618] transition-all duration-200 flex items-center justify-center gap-2 font-bold shadow-md hover:-translate-y-0.5"
             >
-              <Navigation className="w-4 h-4" />
+              <Navigation className="w-5 h-5" />
               Navigate to Customer
             </button>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E8DCC8] shadow-sm mb-4 p-4">
-        <h3 className="mb-3 text-lg font-semibold text-[#2C1810]">Order Items</h3>
-        <div className="space-y-2">
+      <div className="bg-white rounded-2xl border-2 border-[#E8DCC8] shadow-md mb-6 p-5">
+        <h3 className="mb-4 text-xl font-bold text-[#2C1810]">Order Items</h3>
+        <div className="space-y-3">
           {order.items.map((item, idx) => (
-            <div key={idx} className="flex justify-between text-sm py-2 border-b border-[#E8DCC8] last:border-0 text-[#2C1810]">
-              <span>
+            <div key={idx} className="flex justify-between text-base py-3 border-b-2 border-[#E8DCC8] last:border-0 text-[#2C1810]">
+              <span className="font-medium">
                 {item.quantity}x {item.menuItem.name}
               </span>
-              <span>{formatCurrency(item.lineTotal)}</span>
+              <span className="font-medium">{formatCurrency(item.lineTotal)}</span>
             </div>
           ))}
-          <div className="flex justify-between pt-2 font-bold text-[#2C1810]">
+          <div className="flex justify-between pt-3 font-bold text-xl text-[#2C1810]">
             <span>Total Amount</span>
             <span className="text-[#B85C3E]">{formatCurrency(order.totalAmount)}</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-[#FBF8F3] rounded-xl border border-[#E8DCC8] p-4 mb-4">
+      <div className="bg-[#FBF8F3] rounded-2xl border-2 border-[#E8DCC8] p-5 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider">Delivery Status</p>
-            <p className="text-[#2C1810] font-medium mt-1">{status.replace("_", " ")}</p>
+            <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider">Delivery Status</p>
+            <p className="text-[#2C1810] font-bold text-lg mt-1">{status.replace("_", " ")}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-semibold text-[#6B5D52] uppercase tracking-wider">Delivery Fee</p>
-            <p className="text-[#B85C3E] font-bold mt-1">{formatCurrency(order.deliveryFee)}</p>
+            <p className="text-xs font-bold text-[#D4A574] uppercase tracking-wider">Delivery Fee</p>
+            <p className="text-[#B85C3E] font-bold text-lg mt-1">{formatCurrency(order.deliveryFee)}</p>
           </div>
         </div>
       </div>
@@ -172,18 +172,18 @@ export default function OrderDetailsPage() {
       <button
         type="button"
         onClick={() => printCustomerSaleBill(order)}
-        className="w-full bg-white border-2 border-[#D4A574] text-[#2C1810] px-6 py-3 rounded-lg hover:bg-[#FBF8F3] transition-colors flex items-center justify-center gap-2 mb-3 font-medium"
+        className="w-full bg-white border-2 border-[#E8DCC8] text-[#2C1810] px-6 py-4 rounded-xl hover:bg-[#FBF8F3] hover:border-[#D4A574] transition-all duration-200 flex items-center justify-center gap-2 mb-4 font-bold shadow-sm"
       >
-        <Printer className="w-5 h-5" />
+        <Printer className="w-5 h-5 text-[#D4A574]" />
         Print customer bill (58mm)
       </button>
 
       {status === "ASSIGNED" && (
         <button
           onClick={() => void handlePickup()}
-          className="w-full bg-[#D4A574] text-[#2C1810] px-6 py-4 rounded-lg hover:bg-[#C39360] transition-colors flex items-center justify-center gap-2 mb-3 font-bold shadow-md"
+          className="w-full bg-gradient-to-r from-[#D4A574] to-[#C39360] text-[#2C1810] px-6 py-4 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 mb-4 font-bold shadow-md hover:-translate-y-1"
         >
-          <Package className="w-5 h-5" />
+          <Package className="w-6 h-6" />
           Mark as Picked Up
         </button>
       )}
@@ -191,9 +191,9 @@ export default function OrderDetailsPage() {
       {status === "PICKED_UP" && (
         <button
           onClick={() => void handleMarkDelivered()}
-          className="w-full bg-[#B85C3E] text-[#FBF8F3] px-6 py-4 rounded-lg hover:bg-[#8A432D] transition-colors flex items-center justify-center gap-2 font-bold shadow-md"
+          className="w-full bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white px-6 py-4 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 font-bold shadow-md hover:-translate-y-1"
         >
-          <CheckCircle className="w-5 h-5" />
+          <CheckCircle className="w-6 h-6" />
           Mark as Delivered
         </button>
       )}

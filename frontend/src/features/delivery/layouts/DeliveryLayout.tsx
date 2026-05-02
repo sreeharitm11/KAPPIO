@@ -10,16 +10,12 @@ export default function DeliveryLayout() {
     <div className="flex flex-col h-screen bg-[#FBF8F3]">
       <header className="bg-gradient-to-r from-[#2C1810] to-[#6B4423] px-4 py-6 sticky top-0 z-10 shadow-lg">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#3A2618] rounded-full flex items-center justify-center border border-[#D4A574]/30 shadow-inner">
-              <Truck className="w-5 h-5 text-[#D4A574]" />
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Coffee className="w-8 h-8 text-[#D4A574]" />
+              <h2 className="text-[#FBF8F3] text-2xl">Kappio Café</h2>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-[#FBF8F3] text-xl font-semibold m-0">Delivery Partner</h2>
-              </div>
-              <p className="text-sm text-[#D4A574]">{session?.user.fullName ?? "Active"}</p>
-            </div>
+            <p className="text-sm text-[#D4A574]">Delivery Partner • {session?.user.fullName ?? "Active"}</p>
           </div>
           <Link
             to="/"
