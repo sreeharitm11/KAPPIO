@@ -17,7 +17,7 @@ export default function DeliveryLoginPage() {
     setLoading(true);
     try {
       const session = await loginWithPassword(email, password);
-      if (session.user.role !== "DELIVERY_PARTNER") {
+      if (session.user.role !== "DELIVERY") {
         authStore.clear();
         setError("This portal is for delivery partners only.");
         return;
