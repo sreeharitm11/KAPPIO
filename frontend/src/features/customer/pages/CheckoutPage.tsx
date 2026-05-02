@@ -11,6 +11,9 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [comments, setComments] = useState("");
+  const [locationLink, setLocationLink] = useState("");
+  const [capturingLocation, setCapturingLocation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const currentOrder = orderStore.getOrder();
   const subtotal = currentOrder.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -24,6 +27,28 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  const captureLocation = () => {
+    setCapturingLocation(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const link = `https://mappls.com/?q=${lat},${lng}`;
+          setLocationLink(link);
+          setCapturingLocation(false);
+        },
+        (error) => {
+          alert("Unable to capture location: " + error.message);
+          setCapturingLocation(false);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser");
+      setCapturingLocation(false);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!address || !phone || currentOrder.items.length === 0) {
       alert("Please fill in all required fields");
@@ -36,12 +61,17 @@ export default function CheckoutPage() {
       const customerId =
         session?.user.role === "CUSTOMER" ? session.user.sub : undefined;
 
+      const finalInstructions = [
+        comments.trim(), 
+        locationLink ? `Live Location: ${locationLink}` : ''
+      ].filter(Boolean).join('\n\n');
+
       const order = await createOrder({
         ...(customerId ? { customerId } : {}),
         customerName: customerName || undefined,
         customerPhone: phone,
         deliveryAddress: address,
-        specialInstructions: currentOrder.specialInstructions || undefined,
+        specialInstructions: finalInstructions || undefined,
         items: currentOrder.items.map((item) => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
@@ -62,9 +92,19 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-[#2C1810]">Checkout</h1>
-        <p className="text-[#6B5D52] mt-1">Complete your order</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-[#2C1810]">Checkout</h1>
+          <p className="text-[#6B5D52] mt-1">Complete your order</p>
+        </div>
+        <button
+          onClick={captureLocation}
+          disabled={capturingLocation}
+          className="bg-[#6B9B8F] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#4A7C71] disabled:opacity-70 transition-colors flex items-center gap-2"
+        >
+          <MapPin className="w-4 h-4" />
+          {capturingLocation ? "Locating..." : "Use My Location"}
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border-2 border-[#E8DCC8] p-6 mb-4 shadow-md">
@@ -99,7 +139,23 @@ export default function CheckoutPage() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="House no., Street, Area, City"
-              rows={3}
+              rows={2}
+              className="w-full px-4 py-3 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent resize-none bg-[#FBF8F3]"
+            />
+          </div>
+          {locationLink && (
+            <div className="text-sm text-[#6B9B8F] bg-[#6B9B8F]/10 p-3 rounded-xl border border-[#6B9B8F]/30 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              <span>Location captured via Mappls! It will be shared with the delivery partner.</span>
+            </div>
+          )}
+          <div>
+            <label className="block text-sm mb-2 text-[#2C1810]">Cooking Instructions / Comments (Optional)</label>
+            <textarea
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              placeholder="E.g., Less spicy, leave at the door..."
+              rows={2}
               className="w-full px-4 py-3 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent resize-none bg-[#FBF8F3]"
             />
           </div>

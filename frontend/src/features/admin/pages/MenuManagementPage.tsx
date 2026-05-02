@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Edit, Trash2, Search } from "lucide-react";
-import { fetchCategories, fetchMenu, toggleMenuItemAvailability } from "../../menu/api/menuApi";
+import { fetchCategories, fetchMenu, toggleMenuItemAvailability, createCategory, createMenuItem } from "../../menu/api/menuApi";
 import { formatCurrency } from "../../../shared/lib/format";
 import type { Category, MenuItem } from "../../../shared/types/api";
 
@@ -11,6 +11,37 @@ export default function MenuManagementPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "", price: "", categoryId: "", description: "" });
+  const [loading, setLoading] = useState(false);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      if (activeTab === "categories") {
+        await createCategory({ name: formData.name, description: formData.description });
+        setCategories(await fetchCategories());
+      } else {
+        if (!formData.categoryId) throw new Error("Please select a category");
+        await createMenuItem({
+          name: formData.name,
+          categoryId: formData.categoryId,
+          price: parseFloat(formData.price),
+          description: formData.description,
+          available: true,
+        });
+        const menuData = await fetchMenu({ limit: 100 });
+        setItems(menuData.items);
+      }
+      setShowAddModal(false);
+      setFormData({ name: "", price: "", categoryId: "", description: "" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -46,15 +77,15 @@ export default function MenuManagementPage() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1>Menu Management</h1>
+          <h1 className="text-2xl font-bold">Menu Management</h1>
           <p className="text-muted-foreground mt-1">Manage your restaurant menu and categories</p>
           {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 w-full md:w-auto"
         >
           <Plus className="w-4 h-4" />
           Add {activeTab === "categories" ? "Category" : "Item"}
@@ -62,8 +93,81 @@ export default function MenuManagementPage() {
       </div>
 
       {showAddModal && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Create and edit forms are the next step. This screen is now reading live backend data and toggling availability against the API.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <h2 className="text-xl font-bold text-[#2C1810] mb-4">
+              Add {activeTab === "categories" ? "Category" : "Menu Item"}
+            </h2>
+            <form onSubmit={(e) => void handleAdd(e)} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#6B5D52] mb-1">Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                />
+              </div>
+              
+              {activeTab === "items" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-[#6B5D52] mb-1">Category</label>
+                    <select
+                      required
+                      value={formData.categoryId}
+                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                      className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#6B5D52] mb-1">Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-[#6B5D52] mb-1">Description (Optional)</label>
+                <textarea
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                />
+              </div>
+              
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-5 py-2.5 rounded-xl border-2 border-[#E8DCC8] text-[#6B5D52] font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white font-medium hover:shadow-lg transition-all disabled:opacity-60"
+                >
+                  {loading ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

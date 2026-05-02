@@ -44,9 +44,18 @@ export default function OrderDetailsPage() {
     window.location.href = `tel:${order.customerPhone}`;
   };
 
+  const specialInstructions = order.specialInstructions || "";
+  const locationMatch = specialInstructions.match(/Live Location: (https:\/\/mappls\.com\/\?q=[-\d.,]+)/);
+  const locationLink = locationMatch ? locationMatch[1] : null;
+  const commentsOnly = specialInstructions.replace(/Live Location: https:\/\/mappls\.com\/\?q=[-\d.,]+/, '').trim();
+
   const handleOpenMaps = () => {
-    const encodedAddress = encodeURIComponent(order.deliveryAddress);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");
+    if (locationLink) {
+      window.open(locationLink, "_blank");
+    } else {
+      const encodedAddress = encodeURIComponent(order.deliveryAddress);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, "_blank");
+    }
   };
 
   const handleMarkDelivered = async () => {
@@ -132,9 +141,16 @@ export default function OrderDetailsPage() {
               className="w-full bg-[#6B4423] text-[#FBF8F3] px-5 py-3.5 rounded-xl hover:bg-[#3A2618] transition-all duration-200 flex items-center justify-center gap-2 font-bold shadow-md hover:-translate-y-0.5"
             >
               <Navigation className="w-5 h-5" />
-              Navigate to Customer
+              {locationLink ? "Navigate via Mappls (Live)" : "Navigate via Google Maps"}
             </button>
           </div>
+
+          {commentsOnly && (
+            <div className="bg-[#F4E8D8] rounded-xl p-4 mt-4 border-l-4 border-[#B85C3E]">
+              <p className="text-xs font-bold text-[#B85C3E] uppercase tracking-wider mb-1">Customer Instructions</p>
+              <p className="text-[#2C1810] font-medium">"{commentsOnly}"</p>
+            </div>
+          )}
         </div>
       </div>
 

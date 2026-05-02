@@ -18,21 +18,98 @@ const purchaseHistory = [
 
 export default function Inventory() {
   const [activeTab, setActiveTab] = useState<"stock" | "purchases">("stock");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [purchases, setPurchases] = useState(purchaseHistory);
+  const [formData, setFormData] = useState({ supplier: "", items: "", total: "" });
+
+  const handleAddPurchase = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newPurchase = {
+      id: Date.now(),
+      date: new Date().toISOString().split("T")[0],
+      items: formData.items,
+      supplier: formData.supplier,
+      total: parseFloat(formData.total),
+    };
+    setPurchases([newPurchase, ...purchases]);
+    setShowAddModal(false);
+    setFormData({ supplier: "", items: "", total: "" });
+  };
 
   const lowStockItems = inventoryData.filter(item => item.quantity < item.minStock);
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1>Inventory Management</h1>
+          <h1 className="text-2xl font-bold">Inventory Management</h1>
           <p className="text-muted-foreground mt-1">Track raw materials, stock levels, and purchases</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 w-full md:w-auto"
+        >
           <Plus className="w-4 h-4" />
           Add Purchase
         </button>
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <h2 className="text-xl font-bold mb-4">Add Purchase</h2>
+            <form onSubmit={handleAddPurchase} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Supplier Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Items Description</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Milk (20L), Coffee Beans (5kg)"
+                  value={formData.items}
+                  onChange={(e) => setFormData({ ...formData, items: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Total Amount (₹)</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={formData.total}
+                  onChange={(e) => setFormData({ ...formData, total: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-5 py-2.5 rounded-xl border font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700"
+                >
+                  Save Purchase
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {lowStockItems.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -132,7 +209,7 @@ export default function Inventory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {purchaseHistory.map((purchase) => (
+                {purchases.map((purchase) => (
                   <tr key={purchase.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">{purchase.date}</td>
                     <td className="px-6 py-4">{purchase.items}</td>

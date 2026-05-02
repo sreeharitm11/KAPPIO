@@ -28,3 +28,19 @@ export function toggleMenuItemAvailability(id: string) {
     auth: true,
   });
 }
+
+export function createCategory(data: { name: string; description?: string }) {
+  return apiRequest<Category>('/categories', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    auth: true,
+  });
+}
+
+export function createMenuItem(data: any) {
+  return apiRequest<MenuItem>('/menu', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    auth: true,
+  });
+}
