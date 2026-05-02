@@ -1,0 +1,13 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './app/App';
+import './styles/index.css';
+import { hydrateSessionFromCookies } from './shared/lib/session-bootstrap';
+
+void hydrateSessionFromCookies().finally(() => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+});
