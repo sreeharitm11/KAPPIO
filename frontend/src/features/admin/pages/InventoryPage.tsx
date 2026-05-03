@@ -154,7 +154,7 @@ export default function InventoryPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            {filteredIngredients.map((ing) => {
+            {(filteredIngredients ?? []).map((ing) => {
               const isLow = Number(ing.currentStock) <= Number(ing.lowStockThreshold);
               return (
                 <button
