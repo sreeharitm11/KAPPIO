@@ -105,105 +105,120 @@ export class InventoryService {
     const menuRepo = this.dataSource.getRepository(MenuItem);
 
     const rawData = [
-      { name: 'Anar Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1613478223719-2ab802602423' },
-      { name: 'Apple Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1571680322279-a226e6a4cc2a' },
-      { name: 'Arctic Bay (Strawberry, Vanilla)', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1577805947697-89e18249d767' },
-      { name: 'Avocado Mango Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1625944525533-473f1c0c8c36' },
-      { name: 'Avocado Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1625944525533-473f1c0c8c37' },
-      { name: 'Boost', cat: 'Beverage', img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092' },
-      { name: 'Carrot Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c4' },
-      { name: 'Chicken Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1550547660-d9450f859349' },
-      { name: 'Chicken Cheese Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd' },
-      { name: 'Chicken Crispy Sandwich', cat: 'Sandwich', img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d' },
-      { name: 'Chicken Fingers (L)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086' },
-      { name: 'Chicken Fingers (M)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1606755962773-d324e0a13087' },
-      { name: 'Chicken Nuggets (L)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1604908177225-2f4c7f9c2c3c' },
-      { name: 'Chicken Nuggets (M)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1604908177225-2f4c7f9c2c3d' },
-      { name: 'Chicken Sandwich', cat: 'Sandwich', img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af' },
-      { name: 'Chikoo Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699' },
-      { name: 'Chilli Soda', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643d' },
-      { name: 'Choco Nut', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea704b' },
-      { name: 'Classic Falooda', cat: 'Dessert', img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24093' },
-      { name: 'Classic Fruit Salad', cat: 'Dessert', img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb' },
-      { name: 'Coffee', cat: 'Beverage', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93' },
-      { name: 'Combo Burger Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1550547660-4d5d3a3e2c7f' },
-      { name: 'Combo Nuggets Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1561758033-7e924f619b47' },
-      { name: 'Crispy Chick Cheese Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1606755962773-d324e0a13088' },
-      { name: 'Crispy Strips (L)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1562967914-01efa7c2c3f7' },
-      { name: 'Crispy Strips (M)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1562967914-01efa7c2c3f8' },
-      { name: 'Dry Fruit Mix Avil Milk', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea704b' },
-      { name: 'Egg Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1550317138-10000687a72b' },
-      { name: 'Egg Sandwich', cat: 'Sandwich', img: 'https://images.unsplash.com/photo-1562967916-eb82221dfb92' },
-      { name: 'French Fries (L)', cat: 'Snacks', img: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5' },
-      { name: 'French Fries (M)', cat: 'Snacks', img: 'https://images.unsplash.com/photo-1576107232684-1279f390859f' },
-      { name: 'Fresh Lime', cat: 'Drink', img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc' },
-      { name: 'Fresh Lime Soda', cat: 'Drink', img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bd' },
-      { name: 'Fried Chicken (Full)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90' },
-      { name: 'Fried Chicken (Half)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1569058242567-93de6f36f8eb' },
-      { name: 'Fried Chicken (Qtr)', cat: 'Chicken', img: 'https://images.unsplash.com/photo-1562967914-01efa7c2c3f9' },
-      { name: 'Fruit and Nut Avil Milk', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea704d' },
-      { name: 'Fruit Mix Avil Milk', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea704e' },
-      { name: 'Ginger Lime', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643e' },
-      { name: 'Grape Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba' },
-      { name: 'Grape Lime', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643f' },
-      { name: 'Green Apple Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1551024709-8f23befc6b2d' },
-      { name: 'Horlicks', cat: 'Beverage', img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24094' },
-      { name: 'Hot Badam', cat: 'Beverage', img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24095' },
-      { name: 'Hot Crispy Chick Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1612392062798-2e6f8d6a1d28' },
-      { name: 'I Am The King Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b' },
-      { name: 'Jackfruit Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1589308078055-eb8cfe3c1f6f' },
-      { name: 'Lemon Mint Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1605270012917-bf157c5a9541' },
-      { name: 'Loaded Fries (L)', cat: 'Snacks', img: 'https://images.unsplash.com/photo-1561758033-7e924f619b48' },
-      { name: 'Loaded Fries (M)', cat: 'Snacks', img: 'https://images.unsplash.com/photo-1561758033-7e924f619b49' },
-      { name: 'Malabar Magic', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea704f' },
-      { name: 'Mango Banana Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc698' },
-      { name: 'Mango Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0c' },
-      { name: 'Masala Soda', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416440' },
-      { name: 'Mint Lime', cat: 'Drink', img: 'https://images.unsplash.com/photo-1590080877777-5c0c03d33e0c' },
-      { name: 'Mint Lime Soda', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416441' },
-      { name: 'Musambi Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859' },
-      { name: 'Normal Avil Milk', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea7050' },
-      { name: 'Orange Blossom Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55' },
-      { name: 'Orange Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1613478223719-2ab802602424' },
-      { name: 'Orange Lime', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416442' },
-      { name: 'Passion Fruit Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1621263764928-df1444c5e860' },
-      { name: 'Peri Peri Strips (L)', cat: 'Snacks', img: 'https://images.unsplash.com/photo-1562967914-608f82629710' },
-      { name: 'Peri Peri Strips (M)', cat: 'Snacks', img: 'https://images.unsplash.com/photo-1562967914-608f82629711' },
-      { name: 'Pineapple Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1622597467836-f3e0c57cbd08' },
-      { name: 'Pineapple Lime', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416443' },
-      { name: 'Power Booster Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1600271886742-f049cd451bbb' },
-      { name: 'Royal Fruit Salad', cat: 'Dessert', img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cc' },
-      { name: 'Sea Blue Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1598514983318-2f64f8f4796c' },
-      { name: 'Shamam Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c5' },
-      { name: 'Sharjah Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea7051' },
-      { name: 'Soda Sarbath', cat: 'Drink', img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416444' },
-      { name: 'Special Avil Milk', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1551024601-bec78aea7052' },
-      { name: 'Spicy Veg Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1550317138-10000687a72c' },
-      { name: 'Strawberry Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1556679343-c7306c1976be' },
-      { name: 'Strawberry Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1577805947697-89e18249d768' },
-      { name: 'Tea', cat: 'Beverage', img: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574' },
-      { name: 'Tender Avocado Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1625944525533-473f1c0c8c38' },
-      { name: 'Tender Coconut Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24096' },
-      { name: 'Tender Mango Shake', cat: 'Milkshake', img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc697' },
-      { name: 'Veg Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f6' },
-      { name: 'Veg Cheese Burger', cat: 'Burger', img: 'https://images.unsplash.com/photo-1606755962773-7d3c8d8f3e2f' },
-      { name: 'Veg Sandwich', cat: 'Sandwich', img: 'https://images.unsplash.com/photo-1585238342028-78d387f4a708' },
-      { name: 'Vitamin Load Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0d' },
-      { name: 'Watermelon Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c6' },
-      { name: 'Watermelon Mojito', cat: 'Mojito', img: 'https://images.unsplash.com/photo-1598514983318-2f64f8f4796d' },
-      { name: 'Weight Loss Juice', cat: 'Juice', img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c7' },
-      { name: 'Combo Chicken Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1550547660-4d5d3a3e2c8f' },
-      { name: 'Combo Sandwich Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba22d' },
-      { name: 'Combo Fries Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1561758033-7e924f619b48' },
-      { name: 'Combo Juice Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0e' },
-      { name: 'Combo Burger Special', cat: 'Combo', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd' },
-      { name: 'Combo Nuggets Special', cat: 'Combo', img: 'https://images.unsplash.com/photo-1604908177225-2f4c7f9c2c3e' },
-      { name: 'Combo Fried Chicken', cat: 'Combo', img: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e91' },
-      { name: 'Combo Deluxe Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1550547660-4d5d3a3e2c90' },
-      { name: 'Combo Premium Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1561758033-7e924f619b41' },
-      { name: 'Combo Family Pack', cat: 'Combo', img: 'https://images.unsplash.com/photo-1550547660-4d5d3a3e2c91' },
-      { name: 'Combo Party Pack', cat: 'Combo', img: 'https://images.unsplash.com/photo-1561758033-7e924f619b52' },
-      { name: 'Combo Ultimate Meal', cat: 'Combo', img: 'https://images.unsplash.com/photo-1550547660-4d5d3a3e2c92' },
+      // Appetizers
+      { name: 'French Fries (M)', cat: 'Appetizers', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5' },
+      { name: 'French Fries (L)', cat: 'Appetizers', price: '89.00', isVeg: true, img: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5' },
+      { name: 'Chicken Fingers (M)', cat: 'Appetizers', price: '65.00', isVeg: false, img: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086' },
+      { name: 'Chicken Fingers (L)', cat: 'Appetizers', price: '99.00', isVeg: false, img: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086' },
+      { name: 'Chicken Nuggets (M)', cat: 'Appetizers', price: '65.00', isVeg: false, img: 'https://images.unsplash.com/photo-1604908177225-2f4c7f9c2c3c' },
+      { name: 'Chicken Nuggets (L)', cat: 'Appetizers', price: '99.00', isVeg: false, img: 'https://images.unsplash.com/photo-1604908177225-2f4c7f9c2c3c' },
+      { name: 'Crispy Strips (M)', cat: 'Appetizers', price: '89.00', isVeg: false, img: 'https://images.unsplash.com/photo-1562967914-01efa7c2c3f7' },
+      { name: 'Crispy Strips (L)', cat: 'Appetizers', price: '125.00', isVeg: false, img: 'https://images.unsplash.com/photo-1562967914-01efa7c2c3f7' },
+      { name: 'Loaded Fries (M)', cat: 'Appetizers', price: '99.00', isVeg: false, img: 'https://images.unsplash.com/photo-1561758033-7e924f619b48' },
+      { name: 'Loaded Fries (L)', cat: 'Appetizers', price: '129.00', isVeg: false, img: 'https://images.unsplash.com/photo-1561758033-7e924f619b48' },
+      { name: 'Peri Peri Strips (M)', cat: 'Appetizers', price: '95.00', isVeg: false, img: 'https://images.unsplash.com/photo-1562967914-608f82629710' },
+      { name: 'Peri Peri Strips (L)', cat: 'Appetizers', price: '130.00', isVeg: false, img: 'https://images.unsplash.com/photo-1562967914-608f82629710' },
+
+      // Fruit Salad
+      { name: 'Classic Fruit Salad', cat: 'Fruit Salad', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb' },
+      { name: 'Royal Fruit Salad', cat: 'Fruit Salad', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb' },
+
+      // Avil Milk
+      { name: 'Normal Avil Milk', cat: 'Avil Milk', price: '49.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea7050' },
+      { name: 'S.P Avil Milk', cat: 'Avil Milk', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea7050' },
+      { name: 'Fruit Mix Avil Milk', cat: 'Avil Milk', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea704e' },
+      { name: 'Dry Fruit Mix Avil Milk', cat: 'Avil Milk', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea704b' },
+      { name: 'Fruit and Nut Avil Milk', cat: 'Avil Milk', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea704d' },
+
+      // Special Shakes
+      { name: 'Mango Banana Shake', cat: 'Special Shakes', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc698' },
+      { name: 'Avocado Mango Shake', cat: 'Special Shakes', price: '89.00', isVeg: true, img: 'https://images.unsplash.com/photo-1625944525533-473f1c0c8c36' },
+      { name: 'Tender Avocado Shake', cat: 'Special Shakes', price: '89.00', isVeg: true, img: 'https://images.unsplash.com/photo-1625944525533-473f1c0c8c38' },
+      { name: 'Tender Mango Shake', cat: 'Special Shakes', price: '89.00', isVeg: true, img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc697' },
+
+      // Club Sandwich
+      { name: 'Veg Sandwich', cat: 'Club Sandwich', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1585238342028-78d387f4a708' },
+      { name: 'Egg Sandwich', cat: 'Club Sandwich', price: '79.00', isVeg: false, img: 'https://images.unsplash.com/photo-1562967916-eb82221dfb92' },
+      { name: 'Chicken Sandwich', cat: 'Club Sandwich', price: '89.00', isVeg: false, img: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af' },
+      { name: 'Chicken Crispy Sandwich', cat: 'Club Sandwich', price: '99.00', isVeg: false, img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba22d' },
+
+      // Burger
+      { name: 'Veg Burger', cat: 'Burger', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f6' },
+      { name: 'Egg Burger', cat: 'Burger', price: '69.00', isVeg: false, img: 'https://images.unsplash.com/photo-1550317138-10000687a72b' },
+      { name: 'Spicy Veg Burger', cat: 'Burger', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1550317138-10000687a72c' },
+      { name: 'Chicken Burger', cat: 'Burger', price: '79.00', isVeg: false, img: 'https://images.unsplash.com/photo-1550547660-d9450f859349' },
+      { name: 'Veg Cheese Burger', cat: 'Burger', price: '89.00', isVeg: true, img: 'https://images.unsplash.com/photo-1606755962773-7d3c8d8f3e2f' },
+      { name: 'Hot Crispy Chick Burger', cat: 'Burger', price: '89.00', isVeg: false, img: 'https://images.unsplash.com/photo-1612392062798-2e6f8d6a1d28' },
+      { name: 'Chicken Cheese Burger', cat: 'Burger', price: '99.00', isVeg: false, img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd' },
+      { name: 'Crispy Chick Cheese Burger', cat: 'Burger', price: '109.00', isVeg: false, img: 'https://images.unsplash.com/photo-1606755962773-d324e0a13088' },
+
+      // Fried Chicken
+      { name: 'Fried Chicken (Qtr)', cat: 'Fried Chicken', price: '150.00', isVeg: false, img: 'https://images.unsplash.com/photo-1562967914-01efa7c2c3f9' },
+      { name: 'Fried Chicken (Half)', cat: 'Fried Chicken', price: '280.00', isVeg: false, img: 'https://images.unsplash.com/photo-1569058242567-93de6f36f8eb' },
+      { name: 'Fried Chicken (Full)', cat: 'Fried Chicken', price: '540.00', isVeg: false, img: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90' },
+
+      // Healthy Shakes
+      { name: 'Power Booster', cat: 'Healthy Shakes', price: '100.00', isVeg: true, img: 'https://images.unsplash.com/photo-1613478223719-2ab802602423' },
+      { name: 'Vitamin Load', cat: 'Healthy Shakes', price: '120.00', isVeg: true, img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0d' },
+      { name: 'Weight Loss', cat: 'Healthy Shakes', price: '90.00', isVeg: true, img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c7' },
+      { name: 'I Am The King', cat: 'Healthy Shakes', price: '110.00', isVeg: true, img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b' },
+
+      // Fresh Juice
+      { name: 'Watermelon Juice', cat: 'Fresh Juice', price: '39.00', isVeg: true, img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c6' },
+      { name: 'Grape Juice', cat: 'Fresh Juice', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba' },
+      { name: 'Musambi Juice', cat: 'Fresh Juice', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859' },
+      { name: 'Carrot Juice', cat: 'Fresh Juice', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c4' },
+      { name: 'Pineapple Juice', cat: 'Fresh Juice', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1622597467836-f3e0c57cbd08' },
+      { name: 'Orange Juice', cat: 'Fresh Juice', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1613478223719-2ab802602424' },
+
+      // Lime
+      { name: 'Fresh Lime', cat: 'Lime', price: '20.00', isVeg: true, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc' },
+      { name: 'Mint Lime', cat: 'Lime', price: '25.00', isVeg: true, img: 'https://images.unsplash.com/photo-1590080877777-5c0c03d33e0c' },
+      { name: 'Pineapple Lime', cat: 'Lime', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643d' },
+      { name: 'Orange Lime', cat: 'Lime', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416442' },
+      { name: 'Grape Lime', cat: 'Lime', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643f' },
+      { name: 'Ginger Lime', cat: 'Lime', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643e' },
+
+      // Juice & Shakes
+      { name: 'Sharjah Shake', cat: 'Juice & Shakes', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea7051' },
+      { name: 'Shamam Shake', cat: 'Juice & Shakes', price: '59.00', isVeg: true, img: 'https://images.unsplash.com/photo-1627308595171-d1b5d67129c5' },
+      { name: 'Chikoo Shake', cat: 'Juice & Shakes', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699' },
+      { name: 'Mango Shake', cat: 'Juice & Shakes', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0c' },
+      { name: 'Tender Shake', cat: 'Juice & Shakes', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24096' },
+      { name: 'Strawberry Shake', cat: 'Juice & Shakes', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1577805947697-89e18249d768' },
+      { name: 'Avocado Shake', cat: 'Juice & Shakes', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1625944525533-473f1c0c8c37' },
+      { name: 'Apple Shake', cat: 'Juice & Shakes', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1571680322279-a226e6a4cc2a' },
+      { name: 'Anar Shake', cat: 'Juice & Shakes', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1613478223719-2ab802602423' },
+      { name: 'Jackfruit Shake', cat: 'Juice & Shakes', price: '79.00', isVeg: true, img: 'https://images.unsplash.com/photo-1589308078055-eb8cfe3c1f6f' },
+
+      // Hot Beverages
+      { name: 'Tea', cat: 'Hot Beverages', price: '10.00', isVeg: true, img: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574' },
+      { name: 'Coffee', cat: 'Hot Beverages', price: '15.00', isVeg: true, img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93' },
+      { name: 'Boost', cat: 'Hot Beverages', price: '15.00', isVeg: true, img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092' },
+      { name: 'Horlicks', cat: 'Hot Beverages', price: '15.00', isVeg: true, img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24094' },
+      { name: 'Hot Badam', cat: 'Hot Beverages', price: '15.00', isVeg: true, img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24095' },
+
+      // Sodas
+      { name: 'Fresh Lime Soda', cat: 'Sodas', price: '20.00', isVeg: true, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976bd' },
+      { name: 'Chilli Soda', cat: 'Sodas', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca641643d' },
+      { name: 'Masala Soda', cat: 'Sodas', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416440' },
+      { name: 'Mint Lime Soda', cat: 'Sodas', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416441' },
+      { name: 'Soda Sarbath', cat: 'Sodas', price: '30.00', isVeg: true, img: 'https://images.unsplash.com/photo-1582450871972-ab5ca6416444' },
+
+      // Mojito
+      { name: 'Passion Fruit Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859' },
+      { name: 'Sea Blue Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1598514983318-2f64f8f4796c' },
+      { name: 'Strawberry Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1556679343-c7306c1976be' },
+      { name: 'Lemon Mint Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1605270012917-bf157c5a9541' },
+      { name: 'Green Apple Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024709-8f23befc6b2d' },
+      { name: 'Watermelon Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1598514983318-2f64f8f4796d' },
+      { name: 'Orange Blossom Mojito', cat: 'Mojito', price: '69.00', isVeg: true, img: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55' },
+
+      // Falooda
+      { name: 'Arctic Bay (Strawberry, Vanila)', cat: 'Falooda', price: '120.00', isVeg: true, img: 'https://images.unsplash.com/photo-1577805947697-89e18249d767' },
+      { name: 'Choco Nut Falooda', cat: 'Falooda', price: '150.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea704b' },
+      { name: 'Malabar Magic Falooda', cat: 'Falooda', price: '130.00', isVeg: true, img: 'https://images.unsplash.com/photo-1551024601-bec78aea704f' },
+      { name: 'Classic Falooda', cat: 'Falooda', price: '100.00', isVeg: true, img: 'https://images.unsplash.com/photo-1600891964599-f61ba0e24093' },
     ];
 
     const categoriesSet = new Set(rawData.map(i => i.cat));
@@ -231,10 +246,10 @@ export class InventoryService {
         item = await menuRepo.save(menuRepo.create({
           name: i.name,
           description: `Freshly prepared ${i.name} from our ${i.cat} collection.`,
-          price: '240.00',
+          price: i.price,
           categoryId: savedCats[i.cat].id,
           imageUrl: i.img,
-          isVeg: !['Chicken', 'Egg', 'Meat'].some(v => i.name.includes(v))
+          isVeg: i.isVeg
         }));
         itemsCreated++;
         
@@ -243,6 +258,12 @@ export class InventoryService {
           ingredientId: savedIngs['Base Stock'].id,
           quantityNeeded: '1'
         }));
+      } else {
+        // Update existing items with new price and category if needed
+        item.price = i.price;
+        item.categoryId = savedCats[i.cat].id;
+        item.isVeg = i.isVeg;
+        await menuRepo.save(item);
       }
     }
 
