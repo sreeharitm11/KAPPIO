@@ -10,6 +10,8 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { OrdersCronService } from './orders-cron.service';
 
+import { TasksService } from './tasks.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, OrderItem, MenuItem, DeliveryAssignment]),
@@ -17,7 +19,7 @@ import { OrdersCronService } from './orders-cron.service';
     InventoryModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, OrdersCronService],
+  providers: [OrdersService, OrdersCronService, TasksService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

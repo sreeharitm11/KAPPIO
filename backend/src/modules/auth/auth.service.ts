@@ -2,12 +2,15 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import * as nodemailer from 'nodemailer';
 import { Repository } from 'typeorm';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { Role } from '../../database/entities/role.entity';
@@ -20,6 +23,8 @@ import { AuthTokensService } from './auth-tokens.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -28,6 +33,7 @@ export class AuthService {
     @InjectRepository(Otp)
     private readonly otpRepository: Repository<Otp>,
     private readonly authTokensService: AuthTokensService,
+    private readonly configService: ConfigService,
   ) {}
 
   private buildUserPayload(user: User) {
@@ -192,50 +198,74 @@ export class AuthService {
     return { token: accessToken };
   }
 
-  async sendOtp(phone: string) {
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
-    await this.otpRepository.delete({ phone }); // Clear old ones
-    const otp = this.otpRepository.create({ phone, code, expiresAt });
-    await this.otpRepository.save(otp);
-
-    // TODO: Integrate SMS gateway (e.g. Twilio) here:
-    // await this.twilioClient.messages.create({ to: phone, from: '+1...', body: `Your Kappio OTP is ${code}` });
-    
-    // For now, log to console so you can see it during development
-    console.log(`\n============================`);
-    console.log(`  [OTP] Phone: ${phone}`);
-    console.log(`  [OTP] Code:  ${code}`);
-    console.log(`  [MASTER OTP] Always works: 1234`);
-    console.log(`============================\n`);
-    
-    return { message: 'OTP sent successfully' };
-  }
-
-  async verifyOtp(phone: string, code: string) {
-    // MASTER OTP for development/testing — remove in production
-    const MASTER_OTP = '1234';
-    if (code === MASTER_OTP) {
-      // Mark any existing OTP as used so DB stays clean
-      const existing = await this.otpRepository.findOne({ where: { phone, isUsed: false } });
-      if (existing) {
-        existing.isUsed = true;
-        await this.otpRepository.save(existing);
+  async sendOtp(email: string) {
+    const existing = await this.otpRepository.findOne({ where: { email } });
+    if (existing) {
+      const diffMs = Date.now() - existing.lastSentAt.getTime();
+      if (diffMs < 30000) {
+        throw new BadRequestException(`Please wait ${Math.ceil((30000 - diffMs) / 1000)}s before resending.`);
       }
-      return { verified: true, message: 'OTP verified (master)' };
     }
 
+    const plainCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
+    const codeHash = await bcrypt.hash(plainCode, 10);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    await this.otpRepository.delete({ email }); // clear previous OTPs for this email
+    await this.otpRepository.save(
+      this.otpRepository.create({ email, codeHash, expiresAt, attempts: 0, lastSentAt: new Date() }),
+    );
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: this.configService.getOrThrow<string>('GMAIL_USER'),
+        pass: this.configService.getOrThrow<string>('GMAIL_APP_PASSWORD'),
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Kappio Cafe" <${this.configService.get('GMAIL_USER')}>`,
+      to: email,
+      subject: 'Your Kappio Cafe OTP',
+      html: `
+        <div style="font-family:sans-serif;max-width:400px;margin:auto;padding:24px;border:1px solid #e8dcc8;border-radius:12px">
+          <h2 style="color:#2C1810">Kappio Cafe®</h2>
+          <p style="color:#6B5D52">Your one-time password is:</p>
+          <div style="font-size:36px;font-weight:900;color:#B85C3E;letter-spacing:8px;text-align:center;padding:16px 0">${plainCode}</div>
+          <p style="color:#9E8E81;font-size:12px">Expires in 5 minutes. Do not share this code.</p>
+        </div>`,
+    });
+
+    this.logger.log(`OTP sent to ...${email.slice(-8)}`);
+    return { message: 'OTP sent to your email' };
+  }
+
+  async verifyOtp(email: string, code: string) {
+    const MAX_ATTEMPTS = 5;
     const otp = await this.otpRepository.findOne({
-      where: { phone, code, isUsed: false },
+      where: { email, isUsed: false },
     });
 
     if (!otp) {
-      return { verified: false, message: 'Invalid OTP' };
+      return { verified: false, message: 'No active OTP found' };
     }
 
     if (otp.expiresAt.getTime() < Date.now()) {
+      await this.otpRepository.delete({ email });
       return { verified: false, message: 'OTP expired' };
+    }
+
+    if (otp.attempts >= MAX_ATTEMPTS) {
+      await this.otpRepository.delete({ email });
+      return { verified: false, message: 'Too many attempts. Request a new OTP.' };
+    }
+
+    const isValid = await bcrypt.compare(code, otp.codeHash);
+    if (!isValid) {
+      otp.attempts += 1;
+      await this.otpRepository.save(otp);
+      return { verified: false, message: `Invalid OTP. ${MAX_ATTEMPTS - otp.attempts} attempt(s) remaining.` };
     }
 
     otp.isUsed = true;

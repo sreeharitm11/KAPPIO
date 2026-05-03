@@ -14,11 +14,14 @@ async function bootstrap() {
   app.use(helmet());
   app.use(cookieParser());
 
-  const corsOrigin = configService.get<string>('CORS_ORIGIN');
+  const rawCorsOrigin = configService.get<string>('CORS_ORIGIN') ?? '';
+  const corsOrigins = rawCorsOrigin
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: corsOrigin
-      ? corsOrigin.split(',').map((o) => o.trim())
-      : true,
+    origin: corsOrigins.length > 0 ? corsOrigins : false,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],

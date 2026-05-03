@@ -13,9 +13,9 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [comments, setComments] = useState("");
-  const [locationLink, setLocationLink] = useState("");
   const [capturingLocation, setCapturingLocation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -39,6 +39,7 @@ export default function CheckoutPage() {
     const session = authStore.getSession();
     if (session?.user.role === "CUSTOMER") {
       if (session.user.fullName) setCustomerName((prev) => prev || session.user.fullName);
+      if (session.user.email) setEmail((prev) => prev || session.user.email);
       
       // Check if first order
       fetchMyOrders({ limit: 1 })
@@ -95,31 +96,32 @@ export default function CheckoutPage() {
   };
 
   const handleRequestOtp = async () => {
-    if (!phone || phone.length < 10) {
-      alert("Please enter a valid phone number first");
+    if (!email || !email.includes("@")) {
+      alert("Please enter a valid email address for verification");
       return;
     }
     setCapturingLocation(true); // Reusing loading state
     try {
-      await sendOtp(phone);
+      await sendOtp(email);
       setShowOtpModal(true);
     } catch (err) {
-      alert("Failed to send OTP. Please try again.");
+      alert("Failed to send OTP. Please check your email address and try again.");
     } finally {
       setCapturingLocation(false);
     }
   };
 
   const handleVerifyOtp = async () => {
+    if (otp.length < 6) return;
     setVerifyingOtp(true);
     try {
-      const res = await verifyOtp(phone, otp);
+      const res = await verifyOtp(email, otp);
       if (res.verified) {
         setIsPhoneVerified(true);
         setShowOtpModal(false);
         handlePlaceOrder();
       } else {
-        alert("Invalid OTP");
+        alert(res.message || "Invalid OTP");
       }
     } catch (err) {
       alert("Verification failed");
@@ -150,6 +152,8 @@ export default function CheckoutPage() {
         coords ? `Location: ${coords.lat},${coords.lng}` : ''
       ].filter(Boolean).join('\n\n');
 
+      const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
       const order = await createOrder({
         ...(customerId ? { customerId } : {}),
         customerName: customerName || undefined,
@@ -164,6 +168,7 @@ export default function CheckoutPage() {
         latitude: coords?.lat,
         longitude: coords?.lng,
         deliveryDistance: distance || undefined,
+        idempotencyKey,
       });
 
       if (paymentMethod === "UPI") {
@@ -179,13 +184,11 @@ export default function CheckoutPage() {
             lastOrderNumber: order.orderNumber,
             status: order.status,
           });
+          orderStore.reset();
           navigate(`/confirmation/${order.orderNumber}?showQr=true`);
         }, 1500);
       } else {
-        orderStore.updateOrder({
-          lastOrderNumber: order.orderNumber,
-          status: order.status,
-        });
+        orderStore.reset();
         navigate(`/confirmation/${order.orderNumber}`);
       }
     } catch (error) {
@@ -235,6 +238,16 @@ export default function CheckoutPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+91 98765 43210"
+              className="w-full px-4 py-3 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent bg-[#FBF8F3]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-2 text-[#2C1810]">Email Address (for verification)</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="alice@example.com"
               className="w-full px-4 py-3 border-2 border-[#E8DCC8] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4A574] focus:border-transparent bg-[#FBF8F3]"
             />
           </div>
@@ -363,16 +376,16 @@ export default function CheckoutPage() {
       {showOtpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-            <h2 className="text-2xl font-bold text-[#2C1810] mb-2">Verify Phone</h2>
-            <p className="text-[#6B5D52] text-sm mb-6">We've sent a code to <span className="font-bold">{phone}</span></p>
+            <h2 className="text-2xl font-bold text-[#2C1810] mb-2">Verify Email</h2>
+            <p className="text-[#6B5D52] text-sm mb-6">We've sent a 6-digit code to <span className="font-bold">{email}</span></p>
             
             <input
               type="text"
-              placeholder="Enter 4-digit OTP"
-              maxLength={4}
+              placeholder="000000"
+              maxLength={6}
               value={otp}
               onChange={e => setOtp(e.target.value)}
-              className="w-full px-4 py-4 text-center text-2xl tracking-[1em] border-2 border-[#E8DCC8] rounded-xl mb-6 focus:ring-2 focus:ring-[#D4A574] outline-none"
+              className="w-full px-4 py-4 text-center text-3xl tracking-[0.5em] border-2 border-[#E8DCC8] rounded-xl mb-6 focus:ring-2 focus:ring-[#D4A574] outline-none font-bold"
             />
 
             <div className="flex gap-3">
@@ -383,7 +396,7 @@ export default function CheckoutPage() {
                 Cancel
               </button>
               <button
-                disabled={otp.length < 4 || verifyingOtp}
+                disabled={otp.length < 6 || verifyingOtp}
                 onClick={handleVerifyOtp}
                 className="flex-1 py-4 rounded-xl bg-[#2C1810] text-white font-bold disabled:opacity-50"
               >

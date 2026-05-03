@@ -10,6 +10,14 @@ export class ReportQueryDto {
   anchorDate?: string;
 
   @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
   @IsEnum(['SALES', 'CASHBOOK'])
   type?: 'SALES' | 'CASHBOOK';
 }

@@ -12,6 +12,8 @@ import { AuthService } from './auth.service';
 import { SeedService } from './seed.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
+import { OtpCleanupService } from './otp-cleanup.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role, Otp]),
@@ -30,7 +32,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, AuthTokensService, AuthCookiesService, SeedService],
+  providers: [AuthService, JwtStrategy, AuthTokensService, AuthCookiesService, SeedService, OtpCleanupService],
   exports: [AuthService, AuthTokensService],
 })
 export class AuthModule {}

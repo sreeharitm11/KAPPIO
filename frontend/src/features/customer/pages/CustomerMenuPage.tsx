@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, memo } from "react";
 import { Link } from "react-router";
-import { Plus, Search, Sparkles, ShoppingCart, Leaf, Drumstick } from "lucide-react";
+import { Plus, Search, Sparkles, ShoppingCart } from "lucide-react";
 import { fetchCategories, fetchMenu } from "../../menu/api/menuApi";
-import { orderStore } from "../../orders/store/orderStore";
+import { useOrderStore } from "../../orders/store/orderStore";
 import { formatCurrency } from "../../../shared/lib/format";
 import type { MenuItem } from "../../../shared/types/api";
 
@@ -27,16 +27,94 @@ function VegDot({ isVeg }: { isVeg: boolean }) {
   );
 }
 
+/**
+ * Memoized Menu Item Card to prevent unnecessary re-renders of the entire list
+ * when one item is added to cart or when scrolling.
+ */
+const MenuItemCard = memo(({ item, onAdd, isAdded }: { item: MenuItem; onAdd: (i: MenuItem) => void; isAdded: boolean }) => {
+  return (
+    <div className="bg-white rounded-2xl border border-[#EDE5D8] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+      <div className="flex gap-3 p-4">
+        {/* Image */}
+        <div className="relative flex-shrink-0 w-[88px] h-[88px] rounded-xl overflow-hidden bg-gradient-to-br from-[#F4E8D8] to-[#E8DCC8]">
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+                const parent = (e.target as HTMLImageElement).parentElement!;
+                if (!parent.querySelector(".fallback-emoji")) {
+                  const span = document.createElement("span");
+                  span.className = "fallback-emoji absolute inset-0 flex items-center justify-center text-4xl";
+                  span.textContent = "🍽️";
+                  parent.appendChild(span);
+                }
+              }}
+            />
+          ) : (
+            <span className="absolute inset-0 flex items-center justify-center text-4xl">🍽️</span>
+          )}
+          {item.isPopular && (
+            <div className="absolute top-1 left-1 bg-[#B85C3E] text-white text-[8px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+              <Sparkles className="w-2.5 h-2.5" />
+              Hot
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <VegDot isVeg={item.isVeg} />
+              <h3 className="text-[#2C1810] font-bold text-[15px] leading-tight truncate">
+                {item.name}
+              </h3>
+            </div>
+          </div>
+          {item.description && (
+            <p className="text-[#8B7B72] text-xs leading-relaxed line-clamp-2 mb-2">
+              {item.description}
+            </p>
+          )}
+          <div className="flex items-center justify-between mt-auto">
+            <span className="text-[#B85C3E] font-black text-lg">
+              {formatCurrency(item.price)}
+            </span>
+            <button
+              onClick={() => onAdd(item)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
+                isAdded
+                  ? "bg-green-500 text-white scale-95"
+                  : "bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white hover:shadow-lg hover:scale-105 active:scale-95"
+              }`}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {isAdded ? "Added!" : "Add"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function CustomerMenuPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery]           = useState("");
   const [categories, setCategories]             = useState<string[]>(["All"]);
   const [menuItems, setMenuItems]               = useState<MenuItem[]>([]);
-  const [cartCount, setCartCount]               = useState(0);
   const [loading, setLoading]                   = useState(true);
   const [error, setError]                       = useState<string | null>(null);
   const [dietFilter, setDietFilter]             = useState<DietFilter>("ALL");
   const [addedId, setAddedId]                   = useState<string | null>(null);
+
+  // Reactive Cart Count from Zustand (Selector optimization)
+  const cartCount = useOrderStore((state) => state.items.reduce((s, i) => s + i.quantity, 0));
+  const addItem = useOrderStore((state) => state.addItem);
 
   useEffect(() => {
     const load = async () => {
@@ -49,8 +127,6 @@ export default function CustomerMenuPage() {
         ]);
         setCategories(["All", ...categoryData.map((c) => c.name)]);
         setMenuItems(menuData.items);
-        const items = orderStore.getOrder().items;
-        setCartCount(items.reduce((s, i) => s + i.quantity, 0));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unable to load menu");
       } finally {
@@ -60,18 +136,22 @@ export default function CustomerMenuPage() {
     void load();
   }, []);
 
-  const filteredItems = menuItems.filter((item) => {
-    const matchCat    = selectedCategory === "All" || item.category.name === selectedCategory;
-    const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchDiet   =
-      dietFilter === "ALL" ||
-      (dietFilter === "VEG" && item.isVeg) ||
-      (dietFilter === "NON_VEG" && !item.isVeg);
-    return matchCat && matchSearch && matchDiet;
-  });
+  // Memoized filtering to prevent expensive operations on every render
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return menuItems.filter((item) => {
+      const matchCat    = selectedCategory === "All" || item.category.name === selectedCategory;
+      const matchSearch = !query || item.name.toLowerCase().includes(query) || item.description?.toLowerCase().includes(query);
+      const matchDiet   =
+        dietFilter === "ALL" ||
+        (dietFilter === "VEG" && item.isVeg) ||
+        (dietFilter === "NON_VEG" && !item.isVeg);
+      return matchCat && matchSearch && matchDiet;
+    });
+  }, [menuItems, selectedCategory, searchQuery, dietFilter]);
 
-  const addToCart = (item: MenuItem) => {
-    orderStore.addItem({
+  const handleAddToCart = (item: MenuItem) => {
+    addItem({
       menuItemId: item.id,
       name: item.name,
       price: Number(item.price),
@@ -81,8 +161,6 @@ export default function CustomerMenuPage() {
       description: item.description ?? undefined,
       categoryName: item.category.name,
     });
-    const items = orderStore.getOrder().items;
-    setCartCount(items.reduce((s, i) => s + i.quantity, 0));
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 700);
   };
@@ -92,7 +170,6 @@ export default function CustomerMenuPage() {
 
       {/* ── HERO BANNER ── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#2C1810] via-[#5C2D14] to-[#B85C3E] text-white px-5 pt-8 pb-10">
-        {/* decorative circles */}
         <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5" />
         <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5" />
         <div className="relative">
@@ -105,7 +182,7 @@ export default function CustomerMenuPage() {
         </div>
       </div>
 
-      {/* ── SEARCH BAR (overlapping) ── */}
+      {/* ── SEARCH BAR ── */}
       <div className="px-4 -mt-5 mb-5 relative z-10">
         <div className="relative shadow-xl">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#B85C3E]" />
@@ -114,7 +191,7 @@ export default function CustomerMenuPage() {
             placeholder="Search food, drinks…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-0 bg-white text-[#2C1810] placeholder-[#B0A09A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+            className="w-full pl-11 pr-4 py-3.5 rounded-2xl border-0 bg-white text-[#2C1810] placeholder-[#B0A09A] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D4A574] transition-all"
           />
         </div>
       </div>
@@ -138,11 +215,9 @@ export default function CustomerMenuPage() {
 
       {/* ── CATEGORIES ── */}
       <div className="mb-5">
-        {/* Label */}
         <p className="px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[#B85C3E] mb-2">
           Categories
         </p>
-        {/* Scrollable chips */}
         <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 scrollbar-hide">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat;
@@ -169,13 +244,6 @@ export default function CustomerMenuPage() {
           {selectedCategory === "All" ? "All Items" : selectedCategory}
           {" "}<span className="text-[#B85C3E]">({filteredItems.length})</span>
         </p>
-        {dietFilter !== "ALL" && (
-          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-            dietFilter === "VEG" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}>
-            {dietFilter === "VEG" ? "🌿 Veg only" : "🍗 Non-veg only"}
-          </span>
-        )}
       </div>
 
       {/* ── MENU ITEMS ── */}
@@ -197,85 +265,19 @@ export default function CustomerMenuPage() {
           </div>
         )}
 
-        {filteredItems.map((item) => {
-          const wasJustAdded = addedId === item.id;
-          return (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl border border-[#EDE5D8] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
-            >
-              <div className="flex gap-3 p-4">
-                {/* Image */}
-                <div className="relative flex-shrink-0 w-[88px] h-[88px] rounded-xl overflow-hidden bg-gradient-to-br from-[#F4E8D8] to-[#E8DCC8]">
-                  {item.imageUrl ? (
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                        const parent = (e.target as HTMLImageElement).parentElement!;
-                        if (!parent.querySelector(".fallback-emoji")) {
-                          const span = document.createElement("span");
-                          span.className = "fallback-emoji absolute inset-0 flex items-center justify-center text-4xl";
-                          span.textContent = "🍽️";
-                          parent.appendChild(span);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span className="absolute inset-0 flex items-center justify-center text-4xl">🍽️</span>
-                  )}
-                  {/* Popular badge */}
-                  {item.isPopular && (
-                    <div className="absolute top-1 left-1 bg-[#B85C3E] text-white text-[8px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                      <Sparkles className="w-2.5 h-2.5" />
-                      Hot
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <VegDot isVeg={item.isVeg} />
-                      <h3 className="text-[#2C1810] font-bold text-[15px] leading-tight truncate">
-                        {item.name}
-                      </h3>
-                    </div>
-                  </div>
-                  {item.description && (
-                    <p className="text-[#8B7B72] text-xs leading-relaxed line-clamp-2 mb-2">
-                      {item.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-[#B85C3E] font-black text-lg">
-                      {formatCurrency(item.price)}
-                    </span>
-                    <button
-                      onClick={() => addToCart(item)}
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
-                        wasJustAdded
-                          ? "bg-green-500 text-white scale-95"
-                          : "bg-gradient-to-r from-[#B85C3E] to-[#D4A574] text-white hover:shadow-lg hover:scale-105 active:scale-95"
-                      }`}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      {wasJustAdded ? "Added!" : "Add"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {filteredItems.map((item) => (
+          <MenuItemCard 
+            key={item.id} 
+            item={item} 
+            onAdd={handleAddToCart} 
+            isAdded={addedId === item.id} 
+          />
+        ))}
       </div>
 
       {/* ── CART FLOATING BAR ── */}
       {cartCount > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 px-4 z-30">
+        <div className="fixed bottom-20 left-0 right-0 px-4 z-30 animate-in slide-in-from-bottom-10 duration-300">
           <div className="max-w-2xl mx-auto">
             <Link
               to="/cart"

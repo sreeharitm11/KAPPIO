@@ -47,6 +47,15 @@ export class User extends AppBaseEntity {
   @Column({ default: true })
   active: boolean;
 
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  aadhaar: string | null;
+
+  @Column({ name: 'doj', type: 'date', nullable: true })
+  doj: Date | null;
+
+  @Column({ name: 'emergency_contact', type: 'varchar', length: 30, nullable: true })
+  emergencyContact: string | null;
+
   @OneToMany(() => Order, (order) => order.customer)
   customerOrders: Order[];
 

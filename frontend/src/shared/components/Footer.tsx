@@ -10,10 +10,10 @@ export default function Footer() {
             <div className="w-10 h-10 rounded-xl bg-[#D4A574]/20 flex items-center justify-center border border-[#D4A574]/40">
               <Coffee className="w-5 h-5 text-[#D4A574]" />
             </div>
-            <span className="text-xl font-medium tracking-tight text-white">Kappio Café</span>
+            <span className="text-xl font-medium tracking-tight text-white">Kappio Cafe®</span>
           </div>
           <p className="text-sm leading-relaxed">
-            Artisanal coffee and fresh bites delivered straight to your doorstep.
+            near BGS Medical College, BEL Layout, Nagarur Colony, Bengaluru
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function Footer() {
       </div>
 
       <div className="max-w-6xl mx-auto pt-8 border-t border-white/5 text-center text-[10px] uppercase tracking-[0.2em] opacity-40">
-        <p>© {new Date().getFullYear()} Kappio Café · Artisanal Excellence</p>
+        <p>© {new Date().getFullYear()} Kappio Cafe® · Artisanal Excellence</p>
       </div>
     </footer>
   );

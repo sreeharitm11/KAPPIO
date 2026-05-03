@@ -6,6 +6,11 @@ export const fetchIngredients = async () => {
   return response.data;
 };
 
+export const createIngredient = async (data: Partial<Ingredient>) => {
+  const response = await api.post<Ingredient>('/inventory/ingredients', data);
+  return response.data;
+};
+
 export const updateIngredientStock = async (id: string, amount: number, remarks?: string) => {
   const response = await api.patch<Ingredient>(`/inventory/ingredients/${id}/stock`, {
     amount,

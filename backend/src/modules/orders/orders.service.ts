@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository, LessThan } from 'typeorm';
+import { DataSource, In, LessThan, Repository } from 'typeorm';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { SocketEvent } from '../../common/enums/socket-event.enum';
 import { UserRole } from '../../common/enums/user-role.enum';
@@ -23,12 +23,11 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { ListOrdersQueryDto } from './dto/list-orders-query.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { InventoryService } from '../inventory/inventory.service';
+import { TasksService } from './tasks.service';
 
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
-  private readonly SHOP_LAT = 13.0854;
-  private readonly SHOP_LNG = 77.4329;
 
   constructor(
     @InjectRepository(Order)
@@ -41,11 +40,22 @@ export class OrdersService {
     private readonly assignmentsRepository: Repository<DeliveryAssignment>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly notificationsService: NotificationsService,
+    private readonly tasksService: TasksService,
     private readonly inventoryService: InventoryService,
   ) {}
 
   async createOrder(dto: CreateOrderDto) {
+    if (dto.idempotencyKey) {
+      const existing = await this.ordersRepository.findOne({
+        where: { idempotencyKey: dto.idempotencyKey },
+        relations: ['items', 'items.menuItem'],
+      });
+      if (existing) {
+        this.logger.log(`Returning existing order for idempotency key: ${dto.idempotencyKey}`);
+        return existing;
+      }
+    }
+
     // Spam/Blacklist check
     await this.checkBlacklist(dto.customerPhone);
 
@@ -63,36 +73,17 @@ export class OrdersService {
       throw new BadRequestException('One or more menu items are unavailable');
     }
 
+    const { subtotal, deliveryFee, totalAmount } = this.calculatePricing(dto, itemsIndex);
+
+    if (subtotal < 150) {
+      throw new BadRequestException('Minimum order value is ₹150');
+    }
+
     const order = await this.dataSource.transaction(async (manager) => {
-      const subtotal = dto.items.reduce((sum, item) => {
-        const menuItem = itemsIndex.get(item.menuItemId)!;
-        return sum + toMoneyNumber(menuItem.price) * item.quantity;
-      }, 0);
-
-      // Delivery fee logic based on distance (km)
-      let deliveryFee = 0;
-      if (dto.deliveryDistance) {
-        if (dto.deliveryDistance > 12) {
-          throw new BadRequestException('Delivery address is outside our 12km service area');
-        }
-        if (dto.deliveryDistance <= 3) {
-          deliveryFee = 0;
-        } else if (dto.deliveryDistance <= 5) {
-          deliveryFee = 20;
-        } else if (dto.deliveryDistance <= 8) {
-          deliveryFee = 30;
-        } else {
-          deliveryFee = 50;
-        }
-      } else {
-        // Fallback or default if distance not provided (should ideally be mandatory for delivery)
-        deliveryFee = 40;
-      }
-
-      const totalAmount = subtotal + deliveryFee;
+      const orderNumber = await this.generateOrderNumber(manager);
 
       const orderEntity = manager.create(Order, {
-        orderNumber: `KAP-${Date.now().toString().slice(-8)}`,
+        orderNumber,
         customerId: dto.customerId ?? null,
         customerName: dto.customerName ?? null,
         customerPhone: dto.customerPhone,
@@ -104,7 +95,8 @@ export class OrdersService {
         latitude: dto.latitude?.toString() ?? null,
         longitude: dto.longitude?.toString() ?? null,
         deliveryDistance: dto.deliveryDistance?.toString() ?? null,
-        estimatedDeliveryMinutes: 15 + Math.ceil((dto.deliveryDistance || 0) * 4), // 15m prep + 4m per km
+        estimatedDeliveryMinutes: 15 + Math.ceil((dto.deliveryDistance || 0) * 4),
+        idempotencyKey: dto.idempotencyKey ?? null,
       });
 
       const savedOrder = await manager.save(Order, orderEntity);
@@ -112,7 +104,6 @@ export class OrdersService {
       const orderItems = dto.items.map((item) => {
         const menuItem = itemsIndex.get(item.menuItemId)!;
         const unitPrice = toMoneyNumber(menuItem.price);
-
         return manager.create(OrderItem, {
           orderId: savedOrder.id,
           menuItemId: menuItem.id,
@@ -123,25 +114,56 @@ export class OrdersService {
       });
 
       await manager.save(OrderItem, orderItems);
-      return manager.findOneOrFail(Order, {
+      
+      const fullOrder = await manager.findOneOrFail(Order, {
         where: { id: savedOrder.id },
         relations: ['items', 'items.menuItem'],
       });
+
+      // Deduct stock within transaction for atomic safety
+      await this.inventoryService.deductStockForOrder(fullOrder);
+
+      return fullOrder;
     });
 
-    this.logger.log(`Order created: ${order.orderNumber}`);
-    this.notificationsService.emit(SocketEvent.NEW_ORDER, {
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      totalAmount: order.totalAmount,
-      status: order.status,
-    });
-    await this.notificationsService.sendWhatsappNotification(
-      order.customerPhone,
-      `Order ${order.orderNumber} created successfully. Total: INR ${order.totalAmount}.`,
-    );
+    // Background task for external side-effects
+    this.tasksService.dispatchNotification(order);
 
     return order;
+  }
+
+  private calculatePricing(dto: CreateOrderDto, itemsIndex: Map<string, MenuItem>) {
+    const subtotal = dto.items.reduce((sum, item) => {
+      const menuItem = itemsIndex.get(item.menuItemId)!;
+      return sum + toMoneyNumber(menuItem.price) * item.quantity;
+    }, 0);
+
+    let deliveryFee = 50; // default fallback
+    if (dto.deliveryDistance) {
+      if (dto.deliveryDistance > 12) {
+        throw new BadRequestException('Outside 12km service area');
+      }
+      if (dto.deliveryDistance <= 3) deliveryFee = 0;
+      else if (dto.deliveryDistance <= 5) deliveryFee = 20;
+      else if (dto.deliveryDistance <= 8) deliveryFee = 30;
+      else deliveryFee = 50;
+    }
+
+    return { subtotal, deliveryFee, totalAmount: subtotal + deliveryFee };
+  }
+
+  private async generateOrderNumber(manager: any): Promise<string> {
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const todayCount = await manager.createQueryBuilder(Order, 'o')
+      .where('o.created_at >= :start', { start: startOfDay })
+      .getCount();
+    
+    const sequence = (todayCount + 1).toString().padStart(4, '0');
+    return `ORD-${dateStr}-${sequence}`;
   }
 
   async findAll(query: ListOrdersQueryDto): Promise<PaginatedResponse<Order>> {
@@ -250,6 +272,7 @@ export class OrdersService {
       OrderStatus.PENDING,
       OrderStatus.ACCEPTED,
       OrderStatus.PREPARING,
+      OrderStatus.DONE,
       OrderStatus.DELIVERED,
     ];
     const currentIndex = currentStatusFlow.indexOf(order.status);
@@ -293,7 +316,7 @@ export class OrdersService {
     this.logger.log(
       `Order updated: ${order.orderNumber} -> ${dto.status} by ${actor?.fullName ?? 'system'}`,
     );
-    this.notificationsService.emit(SocketEvent.ORDER_UPDATED, {
+    this.tasksService.dispatchUpdate({
       orderId: updatedOrder.id,
       orderNumber: updatedOrder.orderNumber,
       status: updatedOrder.status,
@@ -303,11 +326,6 @@ export class OrdersService {
   }
 
   private async checkBlacklist(phone: string) {
-    const last24h = new Date(Date.now() - 24 * 60 * 1000 * 60);
-    const recentOrders = await this.ordersRepository.find({
-      where: { customerPhone: phone, createdAt: LessThan(last24h) }, // Wait, I need LessThan for Date
-    });
-    // Actually, I'll use query builder for more complex checks
     const stats = await this.ordersRepository
       .createQueryBuilder('order')
       .select('COUNT(id)', 'total')
@@ -321,14 +339,5 @@ export class OrdersService {
     if (total >= 5 && (cancelled / total) > 0.4) {
       throw new BadRequestException('Your account has been restricted due to high cancellation rate.');
     }
-
-    const recentCancelled = await this.ordersRepository.count({
-      where: { 
-        customerPhone: phone, 
-        status: OrderStatus.CANCELLED,
-        createdAt: LessThan(new Date()) // Simplified
-      },
-    });
-    // For now, let's just stick to the 40% rule if total > 5
   }
 }

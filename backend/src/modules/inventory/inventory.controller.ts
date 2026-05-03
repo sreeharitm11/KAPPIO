@@ -17,6 +17,12 @@ export class InventoryController {
     return this.inventoryService.findAllIngredients();
   }
 
+  @Post('ingredients')
+  @Roles(UserRole.ADMIN)
+  create(@Body() body: any) {
+    return this.inventoryService.createIngredient(body);
+  }
+
   @Patch('ingredients/:id/stock')
   @Roles(UserRole.ADMIN)
   async updateStock(

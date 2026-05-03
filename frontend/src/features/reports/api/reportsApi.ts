@@ -8,25 +8,31 @@ import type {
   TopItemsResponse,
 } from '../../../shared/types/api';
 
-export function fetchDashboard(period: 'daily' | 'weekly' | 'monthly', anchorDate?: string) {
+export function fetchDashboard(period: 'daily' | 'weekly' | 'monthly' | 'custom', anchorDate?: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams({ period });
   if (anchorDate) query.set('anchorDate', anchorDate);
+  if (startDate) query.set('startDate', startDate);
+  if (endDate) query.set('endDate', endDate);
   return apiRequest<DashboardResponse>(`/reports/dashboard?${query.toString()}`, {
     auth: true,
   });
 }
 
-export function fetchTopItems(period: 'daily' | 'weekly' | 'monthly', anchorDate?: string) {
+export function fetchTopItems(period: 'daily' | 'weekly' | 'monthly' | 'custom', anchorDate?: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams({ period });
   if (anchorDate) query.set('anchorDate', anchorDate);
+  if (startDate) query.set('startDate', startDate);
+  if (endDate) query.set('endDate', endDate);
   return apiRequest<TopItemsResponse>(`/reports/top-items?${query.toString()}`, {
     auth: true,
   });
 }
 
-export function exportReport(period: 'daily' | 'weekly' | 'monthly', anchorDate?: string) {
+export function exportReport(period: 'daily' | 'weekly' | 'monthly' | 'custom', anchorDate?: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams({ period });
   if (anchorDate) query.set('anchorDate', anchorDate);
+  if (startDate) query.set('startDate', startDate);
+  if (endDate) query.set('endDate', endDate);
   return downloadWithAuth(`/reports/export?${query.toString()}`);
 }
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -21,5 +21,17 @@ export class UsersController {
   @Post('invitations')
   createInvitation(@Body() dto: CreateTeamInvitationDto) {
     return this.usersService.createTeamInvitation(dto);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch(':id')
+  updateMember(@Param('id') id: string, @Body() dto: any) {
+    return this.usersService.updateMember(id, dto);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Delete(':id')
+  deleteMember(@Param('id') id: string) {
+    return this.usersService.deleteMember(id);
   }
 }

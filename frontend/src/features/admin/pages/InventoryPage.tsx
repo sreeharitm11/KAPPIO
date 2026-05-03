@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { Package, Plus, Minus, History, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { fetchIngredients, updateIngredientStock, fetchIngredientLogs } from "../api/inventoryApi";
+import { useEffect, useState, useMemo } from "react";
+import { Package, Plus, Minus, History, AlertTriangle, CheckCircle2, Search, X } from "lucide-react";
+import { fetchIngredients, updateIngredientStock, fetchIngredientLogs, createIngredient } from "../api/inventoryApi";
 import type { Ingredient, InventoryLog } from "../../../shared/types/api";
 
 export default function InventoryPage() {
@@ -11,6 +11,13 @@ export default function InventoryPage() {
   const [adjustment, setAdjustment] = useState<number>(0);
   const [remarks, setRemarks] = useState("");
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Search & Optimization
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Create Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newIng, setNewIng] = useState({ name: '', unit: 'kg', currentStock: '0', lowStockThreshold: '5' });
 
   const loadData = async () => {
     try {
@@ -26,6 +33,13 @@ export default function InventoryPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  const filteredIngredients = useMemo(() => {
+    if (!searchTerm) return ingredients;
+    return ingredients.filter(ing => 
+      ing.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [ingredients, searchTerm]);
 
   const handleSelect = async (ing: Ingredient) => {
     setSelectedIngredient(ing);
@@ -46,7 +60,6 @@ export default function InventoryPage() {
       setSuccess(`Stock updated for ${selectedIngredient.name}`);
       void loadData();
       
-      // Refresh logs for the selected ingredient
       const logData = await fetchIngredientLogs(selectedIngredient.id);
       setLogs(logData);
       
@@ -56,26 +69,68 @@ export default function InventoryPage() {
     }
   };
 
+  const handleCreate = async () => {
+    if (!newIng.name) return;
+    try {
+      await createIngredient(newIng);
+      setSuccess(`Created new ingredient: ${newIng.name}`);
+      setIsCreateModalOpen(false);
+      setNewIng({ name: '', unit: 'kg', currentStock: '0', lowStockThreshold: '5' });
+      void loadData();
+    } catch (err) {
+      console.error("Failed to create", err);
+    }
+  };
+
   if (loading) return <div className="p-8 text-center text-[#6B5D52]">Loading inventory...</div>;
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-[#2C1810]">Inventory Management</h1>
-        <p className="text-[#6B5D52] mt-1">Track raw materials, stock levels, and manual adjustments</p>
+    <div className="p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-[#2C1810]">Inventory Management</h1>
+          <p className="text-[#6B5D52] mt-1">Track raw materials, stock levels, and manual adjustments</p>
+        </div>
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center justify-center gap-2 bg-[#2C1810] text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-[#402A20] transition-all active:scale-95"
+        >
+          <Plus className="w-5 h-5" />
+          Add New Material
+        </button>
       </div>
 
       {success && (
-        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
+        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
           <CheckCircle2 className="w-5 h-5" />
           {success}
         </div>
       )}
 
+      {/* Search Bar - Critical for performance and usability */}
+      <div className="mb-8 relative max-w-xl">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9E8E81]" />
+        <input 
+          type="text"
+          placeholder="Search materials by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-12 pr-4 py-4 bg-white border-2 border-[#E8DCC8] rounded-2xl focus:outline-none focus:border-[#D4A574] transition-colors text-[#2C1810] font-medium shadow-sm"
+        />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm("")}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-[#F4E8D8] rounded-full transition-colors"
+          >
+            <X className="w-4 h-4 text-[#9E8E81]" />
+          </button>
+        )}
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            {ingredients.map((ing) => {
+            {filteredIngredients.map((ing) => {
               const isLow = Number(ing.currentStock) <= Number(ing.lowStockThreshold);
               return (
                 <button
@@ -83,7 +138,7 @@ export default function InventoryPage() {
                   onClick={() => handleSelect(ing)}
                   className={`text-left p-6 rounded-2xl border-2 transition-all duration-200 ${
                     selectedIngredient?.id === ing.id
-                      ? "border-[#D4A574] bg-[#FDF8F3] shadow-md"
+                      ? "border-[#D4A574] bg-[#FDF8F3] shadow-md ring-2 ring-[#D4A574]/20"
                       : "border-[#E8DCC8] bg-white hover:border-[#D4A574]/50"
                   }`}
                 >
@@ -111,16 +166,18 @@ export default function InventoryPage() {
             })}
           </div>
           
-          {ingredients.length === 0 && (
+          {filteredIngredients.length === 0 && (
             <div className="bg-white rounded-2xl border-2 border-dashed border-[#E8DCC8] p-12 text-center">
               <Package className="w-16 h-16 text-[#D4A574]/30 mx-auto mb-4" />
-              <h3 className="text-[#2C1810] mb-2">No ingredients found</h3>
-              <p className="text-[#6B5D52]">Run the inventory seed or add ingredients in the database to get started.</p>
+              <h3 className="text-[#2C1810] mb-2">No materials found</h3>
+              <p className="text-[#6B5D52]">
+                {searchTerm ? "Try a different search term" : "Add ingredients to get started"}
+              </p>
             </div>
           )}
         </div>
 
-        <div>
+        <div className="relative">
           {selectedIngredient ? (
             <div className="bg-white rounded-3xl border-2 border-[#E8DCC8] shadow-2xl p-8 sticky top-8">
               <h3 className="text-[#2C1810] text-xl font-bold mb-6 flex items-center gap-3">
@@ -184,8 +241,8 @@ export default function InventoryPage() {
                     <History className="w-5 h-5 text-[#D4A574]" />
                     Activity Logs
                   </h4>
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-[#D4A574] scrollbar-track-transparent">
-                    {logs.map((log) => (
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#D4A574] scrollbar-track-transparent">
+                    {logs?.map((log) => (
                       <div key={log.id} className="p-4 bg-[#FBF8F3] rounded-2xl border border-[#E8DCC8]/50">
                         <div className="flex justify-between items-center mb-2">
                           <span className={`font-black text-sm ${Number(log.changeAmount) > 0 ? "text-green-600" : "text-red-600"}`}>
@@ -195,21 +252,19 @@ export default function InventoryPage() {
                             {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <div className="text-xs text-[#2C1810] font-medium leading-relaxed">
-                          <span className="opacity-60 uppercase text-[9px] mr-1">Type:</span> {log.type}
-                        </div>
+                        <p className="text-[10px] text-[#2C1810] font-bold opacity-60 uppercase mb-1">{log.type}</p>
                         {log.remarks && (
-                          <div className="mt-1 text-xs text-[#6B5D52] italic">"{log.remarks}"</div>
+                          <div className="text-xs text-[#6B5D52] italic leading-tight">"{log.remarks}"</div>
                         )}
                       </div>
                     ))}
-                    {logs.length === 0 && <p className="text-center text-sm text-[#9E8E81] py-8">No logs yet</p>}
+                    {(!logs || logs.length === 0) && <p className="text-center text-sm text-[#9E8E81] py-8">No logs yet</p>}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-[#F4E8D8]/20 border-4 border-dashed border-[#E8DCC8] rounded-[2rem] p-16 text-center h-full flex flex-col justify-center items-center">
+            <div className="bg-[#F4E8D8]/20 border-4 border-dashed border-[#E8DCC8] rounded-[2rem] p-16 text-center h-[600px] flex flex-col justify-center items-center sticky top-8">
               <div className="p-6 bg-white rounded-full shadow-inner mb-6">
                 <Package className="w-16 h-16 text-[#D4A574] opacity-40" />
               </div>
@@ -219,6 +274,77 @@ export default function InventoryPage() {
           )}
         </div>
       </div>
+
+      {/* Create Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2C1810]/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black text-[#2C1810]">Add Material</h2>
+              <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-[#F4E8D8] rounded-full">
+                <X className="w-6 h-6 text-[#2C1810]" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs font-black text-[#9E8E81] uppercase mb-2 tracking-widest">Material Name</label>
+                <input 
+                  type="text"
+                  value={newIng.name}
+                  onChange={(e) => setNewIng(p => ({ ...p, name: e.target.value }))}
+                  placeholder="e.g. Milk, Sugar, Coffee Beans"
+                  className="w-full px-6 py-4 bg-[#FBF8F3] border-2 border-[#E8DCC8] rounded-2xl focus:outline-none focus:border-[#D4A574]"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black text-[#9E8E81] uppercase mb-2 tracking-widest">Unit</label>
+                  <select 
+                    value={newIng.unit}
+                    onChange={(e) => setNewIng(p => ({ ...p, unit: e.target.value }))}
+                    className="w-full px-6 py-4 bg-[#FBF8F3] border-2 border-[#E8DCC8] rounded-2xl focus:outline-none focus:border-[#D4A574]"
+                  >
+                    <option value="kg">kg</option>
+                    <option value="ltr">ltr</option>
+                    <option value="pcs">pcs</option>
+                    <option value="gms">gms</option>
+                    <option value="ml">ml</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-[#9E8E81] uppercase mb-2 tracking-widest">Threshold</label>
+                  <input 
+                    type="number"
+                    value={newIng.lowStockThreshold}
+                    onChange={(e) => setNewIng(p => ({ ...p, lowStockThreshold: e.target.value }))}
+                    className="w-full px-6 py-4 bg-[#FBF8F3] border-2 border-[#E8DCC8] rounded-2xl focus:outline-none focus:border-[#D4A574]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-[#9E8E81] uppercase mb-2 tracking-widest">Initial Stock</label>
+                <input 
+                  type="number"
+                  value={newIng.currentStock}
+                  onChange={(e) => setNewIng(p => ({ ...p, currentStock: e.target.value }))}
+                  className="w-full px-6 py-4 bg-[#FBF8F3] border-2 border-[#E8DCC8] rounded-2xl focus:outline-none focus:border-[#D4A574]"
+                />
+              </div>
+
+              <button 
+                onClick={handleCreate}
+                disabled={!newIng.name}
+                className="w-full bg-[#B85C3E] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-[#B85C3E]/20 hover:bg-[#A04D32] transition-all disabled:opacity-50"
+              >
+                Create Material
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

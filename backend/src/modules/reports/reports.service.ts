@@ -23,7 +23,10 @@ export class ReportsService {
     private readonly cashbookRepository: Repository<CashbookEntry>,
   ) {}
 
-  private getDateRange(period: ReportPeriod, anchor?: string) {
+  private getDateRange(period: ReportPeriod, anchor?: string, startIn?: string, endIn?: string) {
+    if (period === ReportPeriod.CUSTOM && startIn && endIn) {
+      return Between(new Date(startIn), new Date(endIn));
+    }
     const end = anchor ? new Date(anchor) : new Date();
     const start = new Date(end);
     if (period === ReportPeriod.DAILY) start.setHours(0, 0, 0, 0);
@@ -33,7 +36,7 @@ export class ReportsService {
   }
 
   async dashboard(query: ReportQueryDto) {
-    const range = this.getDateRange(query.period, query.anchorDate);
+    const range = this.getDateRange(query.period, query.anchorDate, query.startDate, query.endDate);
     const orders = await this.ordersRepository.find({
       where: { createdAt: range },
       relations: ['items', 'items.menuItem'],
@@ -78,7 +81,7 @@ export class ReportsService {
   }
 
   async topItems(query: ReportQueryDto) {
-    const range = this.getDateRange(query.period, query.anchorDate);
+    const range = this.getDateRange(query.period, query.anchorDate, query.startDate, query.endDate);
     const rows = await this.orderItemsRepository.find({
       where: { createdAt: range },
       relations: ['menuItem', 'order'],
@@ -110,7 +113,7 @@ export class ReportsService {
   }
 
   async exportCsv(query: ReportQueryDto) {
-    const range = this.getDateRange(query.period, query.anchorDate);
+    const range = this.getDateRange(query.period, query.anchorDate, query.startDate, query.endDate);
 
     if (query.type === 'CASHBOOK') {
       return this.exportCashbookCsv(range, query.period);
@@ -124,6 +127,7 @@ export class ReportsService {
       where: { createdAt: range },
       relations: ['items', 'items.menuItem'],
       order: { createdAt: 'ASC' },
+      take: 5000, // safety cap — prevents OOM on large date ranges
     });
 
     const parser = new Parser({

@@ -5,7 +5,7 @@ import { fetchOrderById } from "../../orders/api/ordersApi";
 import { collectCodPayment, updateDeliveryStatus } from "../api/deliveryApi";
 import { formatCurrency } from "../../../shared/lib/format";
 import type { Order } from "../../../shared/types/api";
-import { printCustomerSaleBill } from "../../../shared/lib/thermal-receipt";
+import { buildMergedBillHtml, openThermalPrint, printCustomerSaleBill } from "../../../shared/lib/thermal-receipt";
 
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
@@ -141,7 +141,7 @@ export default function OrderDetailsPage() {
               className="w-full bg-[#6B4423] text-[#FBF8F3] px-5 py-3.5 rounded-xl hover:bg-[#3A2618] transition-all duration-200 flex items-center justify-center gap-2 font-bold shadow-md hover:-translate-y-0.5"
             >
               <Navigation className="w-5 h-5" />
-              {locationLink ? "Navigate via Mappls (Live)" : "Navigate via Google Maps"}
+              {locationCoords ? "Navigate via Mappls (Live)" : "Navigate via Google Maps"}
             </button>
           </div>
 
@@ -185,14 +185,24 @@ export default function OrderDetailsPage() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => printCustomerSaleBill(order)}
-        className="w-full bg-white border-2 border-[#E8DCC8] text-[#2C1810] px-6 py-4 rounded-xl hover:bg-[#FBF8F3] hover:border-[#D4A574] transition-all duration-200 flex items-center justify-center gap-2 mb-4 font-bold shadow-sm"
-      >
-        <Printer className="w-5 h-5 text-[#D4A574]" />
-        Print customer bill (58mm)
-      </button>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => printCustomerSaleBill(order)}
+          className="bg-white border-2 border-[#E8DCC8] text-[#2C1810] px-4 py-4 rounded-xl hover:bg-[#FBF8F3] hover:border-[#D4A574] transition-all duration-200 flex items-center justify-center gap-2 font-bold shadow-sm"
+        >
+          <Printer className="w-4 h-4 text-[#D4A574]" />
+          Bill Only
+        </button>
+        <button
+          type="button"
+          onClick={() => openThermalPrint(buildMergedBillHtml(order))}
+          className="bg-white border-2 border-[#D4A574] text-[#2C1810] px-4 py-4 rounded-xl hover:bg-[#FBF8F3] transition-all duration-200 flex items-center justify-center gap-2 font-bold shadow-sm"
+        >
+          <Printer className="w-4 h-4 text-[#B85C3E]" />
+          KOT + Bill
+        </button>
+      </div>
 
       {status === "ASSIGNED" && (
         <button

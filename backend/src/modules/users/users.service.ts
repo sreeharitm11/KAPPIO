@@ -86,6 +86,20 @@ export class UsersService {
     };
   }
 
+  async updateMember(id: string, dto: any) {
+    const user = await this.usersRepository.findOneOrFail({ where: { id } });
+    Object.assign(user, dto);
+    await this.usersRepository.save(user);
+    return this.toPublicMember(user);
+  }
+
+  async deleteMember(id: string) {
+    const user = await this.usersRepository.findOneOrFail({ where: { id } });
+    user.active = false; // Soft delete/Deactivate
+    await this.usersRepository.save(user);
+    return { success: true };
+  }
+
   private toPublicMember(user: User) {
     const pendingInvite = Boolean(
       !user.passwordHash && user.inviteToken && user.inviteExpiresAt,
@@ -95,8 +109,11 @@ export class UsersService {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      role: user.role.name,
+      role: user.role?.name,
       active: user.active,
+      aadhaar: user.aadhaar,
+      doj: user.doj,
+      emergencyContact: user.emergencyContact,
       pendingInvite,
       createdAt: user.createdAt.toISOString(),
     };

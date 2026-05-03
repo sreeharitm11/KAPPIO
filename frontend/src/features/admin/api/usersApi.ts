@@ -10,9 +10,27 @@ export function createTeamInvitation(payload: {
   email: string;
   phone: string;
   role: UserRole;
+  aadhaar?: string;
+  doj?: string;
+  emergencyContact?: string;
 }) {
   return apiRequest<TeamInvitationResult>('/users/invitations', {
     method: 'POST',
+    auth: true,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteTeamMember(id: string) {
+  return apiRequest<{ success: boolean }>(`/users/${id}`, {
+    method: 'DELETE',
+    auth: true,
+  });
+}
+
+export function updateTeamMember(id: string, payload: Partial<StaffMember>) {
+  return apiRequest<StaffMember>(`/users/${id}`, {
+    method: 'PATCH',
     auth: true,
     body: JSON.stringify(payload),
   });

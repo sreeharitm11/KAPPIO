@@ -19,13 +19,16 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { ListOrdersQueryDto } from './dto/list-orders-query.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { OrdersService } from './orders.service';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('orders')
+@UseGuards(JwtAuthGuard, RolesGuard, ThrottlerGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Public()
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.CUSTOMER)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   create(@Body() dto: CreateOrderDto) {
     return this.ordersService.createOrder(dto);
   }

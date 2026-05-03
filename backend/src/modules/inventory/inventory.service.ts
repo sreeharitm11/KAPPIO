@@ -157,6 +157,22 @@ export class InventoryService {
     return this.ingredientRepo.find({ order: { name: 'ASC' } });
   }
 
+  async createIngredient(data: Partial<Ingredient>) {
+    const ingredient = this.ingredientRepo.create(data);
+    const saved = await this.ingredientRepo.save(ingredient);
+    
+    // Initial stock log
+    await this.logRepo.save(this.logRepo.create({
+      ingredientId: saved.id,
+      changeAmount: saved.currentStock,
+      type: InventoryLogType.MANUAL_ADJUSTMENT,
+      remarks: 'Initial stock on creation',
+    }));
+    
+    return saved;
+  }
+
+
   async getLogs(ingredientId: string) {
     return this.logRepo.find({
       where: { ingredientId },

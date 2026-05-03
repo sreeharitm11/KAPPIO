@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as Joi from 'joi';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -23,6 +24,15 @@ import { InventoryModule } from './modules/inventory/inventory.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+        DATABASE_URL: Joi.string().required(),
+        JWT_SECRET: Joi.string().required(),
+        JWT_REFRESH_SECRET: Joi.string().required(),
+        GMAIL_USER: Joi.string().email().optional(),
+        GMAIL_APP_PASSWORD: Joi.string().optional(),
+        CORS_ORIGIN: Joi.string().required(),
+      }),
     }),
     ThrottlerModule.forRoot({
       throttlers: [

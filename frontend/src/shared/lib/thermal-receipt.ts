@@ -187,7 +187,8 @@ export function buildCustomerSaleBillHtml(order: Order): string {
   ${gst ? `<div class="c sm">GSTIN: ${gst}</div>` : ''}
   ${e.fssai ? `<div class="c sm">FSSAI: ${escapeHtml(e.fssai)}</div>` : ''}
   ${e.socials ? `<div class="c sm">@${escapeHtml(e.socials)}</div>` : ''}
-  <div class="c sm mt">RETAIL TAX INVOICE / BILL OF SUPPLY</div>
+  <div class="c sm mt b">ORDER TYPE: ${order.tableNumber ? 'OFFLINE / DINE-IN' : 'ONLINE / DELIVERY'}</div>
+  <div class="c sm">RETAIL TAX INVOICE / BILL OF SUPPLY</div>
   <hr class="sep" />
   <div class="row sm"><span>Bill No.</span><span class="b">${escapeHtml(order.orderNumber)}</span></div>
   ${order.tableNumber ? `<div class="row sm"><span>Table</span><span class="b">${escapeHtml(order.tableNumber)}</span></div>` : ''}
@@ -219,6 +220,19 @@ export function buildCustomerSaleBillHtml(order: Order): string {
   ${qrBlock}
   <div class="c sm mt" style="margin-top:10px;">Powered by Kappio · 58mm thermal</div>
 </div></body></html>`;
+}
+
+/** Merged KOT + Bill for a single-print flow */
+export function buildMergedBillHtml(order: Order): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"/>${thermalBaseStyles()}</head>
+<body>
+  ${buildKitchenOrderTicketHtml(order).replace(/<\/?(html|head|body|meta)[^>]*>/gi, '')}
+  <div style="border-top:2px dashed #000;margin:15px 0 10px;position:relative;">
+    <span style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#fff;padding:0 8px;font-size:9px;font-weight:bold;">CUT HERE</span>
+  </div>
+  ${buildCustomerSaleBillHtml(order).replace(/<\/?(html|head|body|meta)[^>]*>/gi, '')}
+</body></html>`;
 }
 
 export function openThermalPrint(html: string): void {

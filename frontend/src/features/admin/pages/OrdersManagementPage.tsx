@@ -228,10 +228,19 @@ export default function OrdersManagementPage() {
                 {order.status === "ACCEPTED" && (
                   <button
                     onClick={() => void updateStatus(order.id, "PREPARING")}
-                    className="flex-1 min-w-[140px] bg-gradient-to-r from-[#B85C3E] to-[#A04A31] text-white px-4 py-3 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                    className="flex-1 min-w-[140px] bg-gradient-to-r from-[#D4A574] to-[#B85C3E] text-white px-4 py-3 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
                   >
-                    <Check className="w-4 h-4" />
+                    <ChefHat className="w-4 h-4" />
                     Start Preparing
+                  </button>
+                )}
+                {order.status === "PREPARING" && (
+                  <button
+                    onClick={() => void updateStatus(order.id, "DONE" as any)}
+                    className="flex-1 min-w-[140px] bg-gradient-to-r from-[#6B9B8F] to-[#2C1810] text-white px-4 py-3 rounded-xl hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Done Preparing
                   </button>
                 )}
                 <button

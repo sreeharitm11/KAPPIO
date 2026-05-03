@@ -20,6 +20,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
+import { SendOtpDto, VerifyOtpDto } from './dto/otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -112,15 +113,15 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('otp/send')
-  sendOtp(@Body('phone') phone: string) {
-    return this.authService.sendOtp(phone);
+  sendOtp(@Body() dto: SendOtpDto) {
+    return this.authService.sendOtp(dto.email);
   }
 
   @Public()
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('otp/verify')
-  verifyOtp(@Body('phone') phone: string, @Body('otp') otp: string) {
-    return this.authService.verifyOtp(phone, otp);
+  verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto.email, dto.otp);
   }
 }

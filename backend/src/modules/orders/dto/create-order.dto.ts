@@ -66,6 +66,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsNumber()
   deliveryDistance?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  idempotencyKey?: string;
 }
 
 export { CreateOrderItemDto };

@@ -1,15 +1,15 @@
 import { apiRequest } from '../../../shared/lib/api-client';
 
-export function sendOtp(phone: string) {
+export function sendOtp(email: string) {
   return apiRequest<{ message: string }>('/auth/otp/send', {
     method: 'POST',
-    body: JSON.stringify({ phone }),
+    body: JSON.stringify({ email }),
   });
 }
 
-export function verifyOtp(phone: string, otp: string) {
+export function verifyOtp(email: string, otp: string) {
   return apiRequest<{ message: string; verified: boolean }>('/auth/otp/verify', {
     method: 'POST',
-    body: JSON.stringify({ phone, otp }),
+    body: JSON.stringify({ email, otp }),
   });
 }

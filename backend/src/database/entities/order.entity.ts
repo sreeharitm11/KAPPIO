@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { DeliveryStatus } from '../../common/enums/delivery-status.enum';
 import { OrderStatus } from '../../common/enums/order-status.enum';
 import { PaymentStatus } from '../../common/enums/payment-status.enum';
@@ -9,9 +9,14 @@ import { OrderItem } from './order-item.entity';
 import { User } from './user.entity';
 
 @Entity('orders')
+@Index(['status', 'createdAt'])
 export class Order extends AppBaseEntity {
   @Column({ name: 'order_number', type: 'varchar', unique: true, length: 30 })
   orderNumber: string;
+
+  @Index()
+  @Column({ name: 'idempotency_key', type: 'varchar', unique: true, nullable: true })
+  idempotencyKey?: string | null;
 
   @Column({ name: 'customer_id', type: 'uuid', nullable: true })
   customerId?: string | null;
@@ -23,6 +28,7 @@ export class Order extends AppBaseEntity {
   @Column({ name: 'customer_name', type: 'varchar', length: 120, nullable: true })
   customerName?: string | null;
 
+  @Index()
   @Column({ name: 'customer_phone', type: 'varchar', length: 30 })
   customerPhone: string;
 

@@ -6,11 +6,13 @@ export function createOrder(payload: {
   customerName?: string;
   customerPhone: string;
   deliveryAddress: string;
+  tableNumber?: string;
   specialInstructions?: string;
   items: Array<{ menuItemId: string; quantity: number }>;
   latitude?: number;
   longitude?: number;
   deliveryDistance?: number;
+  idempotencyKey?: string;
 }) {
   return apiRequest<Order>('/orders', {
     method: 'POST',

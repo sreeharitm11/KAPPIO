@@ -176,6 +176,9 @@ export type StaffMember = {
   role: UserRole;
   active: boolean;
   pendingInvite?: boolean;
+  aadhaar?: string | null;
+  doj?: string | null;
+  emergencyContact?: string | null;
   createdAt: string;
 };
 

@@ -8,15 +8,15 @@
 import type { Order } from '../types/api';
 
 const RESTAURANT = {
-  name: 'Kappio Café',
+  name: 'Kappio Cafe®',
   tagline: 'Artisanal Coffee & Fresh Bites',
-  address: 'Kappio Café, Near Main Road, Tumkur, Karnataka – 572101',
+  address: 'near BGS Medical College, BEL Layout, Nagarur Colony, Bengaluru',
   phone: '+91 70122 06714',
   email: 'cafekappio@gmail.com',
   instagram: '@cafekappio',
   whatsapp: 'wa.me/917012206714',
-  gstin: 'PENDING_REGISTRATION',
-  fssai: 'PENDING_REGISTRATION',
+  gstin: 'Applied For',
+  fssai: '21226008001309',
 };
 
 function formatCurrency(amount: string | number): string {

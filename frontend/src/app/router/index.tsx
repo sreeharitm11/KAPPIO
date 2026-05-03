@@ -28,6 +28,8 @@ import { ErrorBoundary } from "../../shared/components/ErrorBoundary";
 import { NotFound } from "../../shared/components/NotFound";
 import { Navigate } from "react-router";
 
+import OrderTrackingPage from "../../features/customer/pages/OrderTrackingPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -41,6 +43,7 @@ export const router = createBrowserRouter([
           { path: "cart", Component: CartPage },
           { path: "checkout", Component: CheckoutPage },
           { path: "confirmation/:orderId", Component: OrderConfirmationPage },
+          { path: "track/:orderNumber", Component: OrderTrackingPage },
           { path: "profile", Component: CustomerProfilePage },
         ],
       },
