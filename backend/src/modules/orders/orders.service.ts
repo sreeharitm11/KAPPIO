@@ -120,9 +120,6 @@ export class OrdersService {
         relations: ['items', 'items.menuItem'],
       });
 
-      // Deduct stock within transaction for atomic safety
-      await this.inventoryService.deductStockForOrder(fullOrder);
-
       return fullOrder;
     });
 
@@ -267,62 +264,78 @@ export class OrdersService {
   }
 
   async updateStatus(id: string, dto: UpdateOrderStatusDto, actor?: AuthUser) {
-    const order = await this.findOne(id);
-    const currentStatusFlow = [
-      OrderStatus.PENDING,
-      OrderStatus.ACCEPTED,
-      OrderStatus.PREPARING,
-      OrderStatus.DONE,
-      OrderStatus.DELIVERED,
-    ];
-    const currentIndex = currentStatusFlow.indexOf(order.status);
-    const nextIndex = currentStatusFlow.indexOf(dto.status);
-
-    if (nextIndex < currentIndex) {
-      throw new BadRequestException('Order status cannot move backward');
-    }
-
-    order.status = dto.status;
-    
-    // Auto-assign to delivery partner if accepted
-    if (dto.status === OrderStatus.ACCEPTED) {
-      // Find the first delivery user (assuming one partner for now)
-      const deliveryUser = await this.dataSource.getRepository(User).findOne({
-        where: { role: { name: UserRole.DELIVERY }, active: true },
-        relations: ['role'],
+    return await this.dataSource.transaction(async (manager) => {
+      const ordersRepo = manager.getRepository(Order);
+      const order = await ordersRepo.findOne({
+        where: { id },
+        relations: ['items', 'items.menuItem', 'deliveryAssignment'],
       });
-      
-      if (deliveryUser) {
-        order.assignedById = deliveryUser.id;
-        order.deliveryStatus = DeliveryStatus.ASSIGNED;
-        
-        // Create delivery assignment record
-        const assignment = this.assignmentsRepository.create({
-          orderId: order.id,
-          partnerId: deliveryUser.id,
-          status: DeliveryStatus.ASSIGNED,
-        });
-        await this.assignmentsRepository.save(assignment);
 
-        this.logger.log(`Order ${order.orderNumber} auto-assigned to delivery partner: ${deliveryUser.fullName}`);
+      if (!order) {
+        throw new NotFoundException('Order not found');
       }
+
+      const currentStatusFlow = [
+        OrderStatus.PENDING,
+        OrderStatus.ACCEPTED,
+        OrderStatus.PREPARING,
+        OrderStatus.DONE,
+        OrderStatus.DELIVERED,
+      ];
+      const currentIndex = currentStatusFlow.indexOf(order.status);
+      const nextIndex = currentStatusFlow.indexOf(dto.status);
+
+      if (nextIndex < currentIndex) {
+        throw new BadRequestException('Order status cannot move backward');
+      }
+
+      const oldStatus = order.status;
+      order.status = dto.status;
       
-      // Deduct inventory stock
-      await this.inventoryService.deductStockForOrder(order);
-    }
+      // Auto-assign to delivery partner if accepted
+      if (dto.status === OrderStatus.ACCEPTED) {
+        // Find the first delivery user (assuming one partner for now)
+        const deliveryUser = await manager.getRepository(User).findOne({
+          where: { role: { name: UserRole.DELIVERY }, active: true },
+          relations: ['role'],
+        });
+        
+        if (deliveryUser) {
+          order.assignedById = deliveryUser.id;
+          order.deliveryStatus = DeliveryStatus.ASSIGNED;
+          
+          // Create delivery assignment record
+          const assignmentsRepo = manager.getRepository(DeliveryAssignment);
+          const assignment = assignmentsRepo.create({
+            orderId: order.id,
+            partnerId: deliveryUser.id,
+            status: DeliveryStatus.ASSIGNED,
+          });
+          await assignmentsRepo.save(assignment);
 
-    const updatedOrder = await this.ordersRepository.save(order);
+          this.logger.log(`Order ${order.orderNumber} auto-assigned to delivery partner: ${deliveryUser.fullName}`);
+        }
+        
+        // Deduct inventory stock ONLY IF it was PENDING (prevents double deduction)
+        if (oldStatus === OrderStatus.PENDING) {
+          await this.inventoryService.deductStockForOrder(order, manager);
+        }
+      }
 
-    this.logger.log(
-      `Order updated: ${order.orderNumber} -> ${dto.status} by ${actor?.fullName ?? 'system'}`,
-    );
-    this.tasksService.dispatchUpdate({
-      orderId: updatedOrder.id,
-      orderNumber: updatedOrder.orderNumber,
-      status: updatedOrder.status,
+      const updatedOrder = await ordersRepo.save(order);
+
+      this.logger.log(
+        `Order updated: ${order.orderNumber} -> ${dto.status} by ${actor?.fullName ?? 'system'}`,
+      );
+      
+      this.tasksService.dispatchUpdate({
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.orderNumber,
+        status: updatedOrder.status,
+      });
+
+      return updatedOrder;
     });
-
-    return updatedOrder;
   }
 
   private async checkBlacklist(phone: string) {

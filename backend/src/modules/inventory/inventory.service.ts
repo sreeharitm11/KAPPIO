@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { Category } from '../../database/entities/category.entity';
 import { Ingredient } from '../../database/entities/ingredient.entity';
 import { MenuItemIngredient } from '../../database/entities/menu-item-ingredient.entity';
@@ -28,36 +28,76 @@ export class InventoryService {
   /**
    * Deducts ingredients stock based on order items
    */
-  async deductStockForOrder(order: Order) {
+  async deductStockForOrder(order: Order, manager?: EntityManager) {
     this.logger.log(`Deducting stock for order: ${order.orderNumber}`);
+
+    const ingredientRepo = manager ? manager.getRepository(Ingredient) : this.ingredientRepo;
+    const mappingRepo = manager ? manager.getRepository(MenuItemIngredient) : this.mappingRepo;
+    const logRepo = manager ? manager.getRepository(InventoryLog) : this.logRepo;
 
     for (const item of order.items) {
       // Find all ingredients linked to this menu item
-      const mappings = await this.mappingRepo.find({
+      const mappings = await mappingRepo.find({
         where: { menuItemId: item.menuItemId },
         relations: ['ingredient'],
       });
 
       for (const mapping of mappings) {
         const quantityToDeduct = Number(mapping.quantityNeeded) * item.quantity;
-        const ingredient = await this.ingredientRepo.findOne({ where: { id: mapping.ingredientId } });
+        const ingredient = await ingredientRepo.findOne({ where: { id: mapping.ingredientId } });
 
         if (ingredient) {
           const oldStock = Number(ingredient.currentStock);
-          ingredient.currentStock = (oldStock - quantityToDeduct).toString();
+          const newStock = oldStock - quantityToDeduct;
+          ingredient.currentStock = newStock.toString();
           
-          await this.ingredientRepo.save(ingredient);
+          await ingredientRepo.save(ingredient);
 
           // Log the automated deduction
-          await this.logRepo.save(this.logRepo.create({
+          await logRepo.save(logRepo.create({
             ingredientId: ingredient.id,
             changeAmount: `-${quantityToDeduct}`,
+            balanceAfter: newStock.toString(),
             type: InventoryLogType.AUTO_DEDUCTION,
             remarks: `Order ${order.orderNumber} - ${item.quantity}x ${item.menuItem?.name || 'Item'}`,
           }));
         }
       }
     }
+  }
+
+  async updateStock(
+    ingredientId: string,
+    amount: number,
+    type: InventoryLogType = InventoryLogType.MANUAL_ADJUSTMENT,
+    remarks?: string,
+    manager?: EntityManager,
+  ) {
+    const ingredientRepo = manager ? manager.getRepository(Ingredient) : this.ingredientRepo;
+    const logRepo = manager ? manager.getRepository(InventoryLog) : this.logRepo;
+
+    const ingredient = await ingredientRepo.findOne({ where: { id: ingredientId } });
+    if (!ingredient) {
+      throw new NotFoundException(`Ingredient with ID ${ingredientId} not found`);
+    }
+
+    const oldStock = Number(ingredient.currentStock);
+    const newStock = oldStock + amount;
+    ingredient.currentStock = newStock.toString();
+
+    const saved = await ingredientRepo.save(ingredient);
+
+    await logRepo.save(
+      logRepo.create({
+        ingredientId: saved.id,
+        changeAmount: amount.toString(),
+        balanceAfter: newStock.toString(),
+        type,
+        remarks: remarks || 'Stock updated',
+      }),
+    );
+
+    return saved;
   }
 
   async seedInventory(): Promise<string> {
@@ -220,6 +260,7 @@ export class InventoryService {
     await this.logRepo.save(this.logRepo.create({
       ingredientId: saved.id,
       changeAmount: saved.currentStock,
+      balanceAfter: saved.currentStock,
       type: InventoryLogType.MANUAL_ADJUSTMENT,
       remarks: 'Initial stock on creation',
     }));
