@@ -26,7 +26,7 @@ export default function InventoryPage() {
       const { api } = await import("../../../shared/lib/api-client");
       await api.post("/inventory/seed");
       alert("Database seeded successfully! Items will now appear in the menu.");
-      void loadData();
+      await loadData();
     } catch (err) {
       alert("Seeding failed: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally {
@@ -37,9 +37,10 @@ export default function InventoryPage() {
   const loadData = async () => {
     try {
       const data = await fetchIngredients();
-      setIngredients(data);
+      setIngredients(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load inventory", err);
+      setIngredients([]);
     } finally {
       setLoading(false);
     }
@@ -50,13 +51,15 @@ export default function InventoryPage() {
   }, []);
 
   const filteredIngredients = useMemo(() => {
-    if (!searchTerm) return ingredients;
-    return ingredients.filter(ing => 
-      ing.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const list = Array.isArray(ingredients) ? ingredients : [];
+    if (!searchTerm) return list;
+    return list.filter(ing => 
+      ing?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [ingredients, searchTerm]);
 
   const handleSelect = async (ing: Ingredient) => {
+    if (!ing) return;
     setSelectedIngredient(ing);
     setAdjustment(0);
     setRemarks("");
@@ -190,7 +193,7 @@ export default function InventoryPage() {
             })}
           </div>
           
-          {filteredIngredients.length === 0 && (
+          {filteredIngredients?.length === 0 && (
             <div className="bg-white rounded-2xl border-2 border-dashed border-[#E8DCC8] p-12 text-center">
               <Package className="w-16 h-16 text-[#D4A574]/30 mx-auto mb-4" />
               <h3 className="text-[#2C1810] mb-2">No materials found</h3>
