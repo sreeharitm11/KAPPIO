@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { Category } from '../../database/entities/category.entity';
 import { Ingredient } from '../../database/entities/ingredient.entity';
 import { MenuItemIngredient } from '../../database/entities/menu-item-ingredient.entity';
 import { InventoryLog, InventoryLogType } from '../../database/entities/inventory-log.entity';

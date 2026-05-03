@@ -96,7 +96,7 @@ export default function LandingPage() {
           <div className="relative lg:pl-10">
             <div className="relative rounded-[3rem] overflow-hidden shadow-2xl shadow-[#2C1810]/20 aspect-square sm:aspect-[4/5] lg:aspect-square">
               <img 
-                src="/hero_coffee_artisanal_1777807262533.png" 
+                src="/hero.png" 
                 alt="Artisanal Coffee"
                 className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-1000"
               />
