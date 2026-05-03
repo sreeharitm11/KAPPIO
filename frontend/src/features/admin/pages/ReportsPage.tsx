@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, FileText, Calendar } from "lucide-react";
+import { Download, FileText, Calendar, Coffee } from "lucide-react";
 import { exportReport, fetchDashboard, fetchTopItems } from "../../reports/api/reportsApi";
 import { formatCurrency } from "../../../shared/lib/format";
 import type { DashboardResponse, TopItemsResponse } from "../../../shared/types/api";

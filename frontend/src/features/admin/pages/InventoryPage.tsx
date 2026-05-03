@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Package, Plus, Minus, History, AlertTriangle, CheckCircle2, Search, X } from "lucide-react";
+import { Package, Plus, Minus, History, AlertTriangle, CheckCircle2, Search, X, Sparkles, Download, FileText, Calendar, Coffee } from "lucide-react";
 import { fetchIngredients, updateIngredientStock, fetchIngredientLogs, createIngredient } from "../api/inventoryApi";
 import type { Ingredient, InventoryLog } from "../../../shared/types/api";
 
@@ -18,6 +18,21 @@ export default function InventoryPage() {
   // Create Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newIng, setNewIng] = useState({ name: '', unit: 'kg', currentStock: '0', lowStockThreshold: '5' });
+
+  const handleSeed = async () => {
+    if (!confirm("Are you sure you want to initialize the database with demo menu items?")) return;
+    try {
+      setLoading(true);
+      const { api } = await import("../../../shared/lib/api-client");
+      await api.post("/inventory/seed");
+      alert("Database seeded successfully! Items will now appear in the menu.");
+      void loadData();
+    } catch (err) {
+      alert("Seeding failed: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -91,13 +106,22 @@ export default function InventoryPage() {
           <h1 className="text-[#2C1810]">Inventory Management</h1>
           <p className="text-[#6B5D52] mt-1">Track raw materials, stock levels, and manual adjustments</p>
         </div>
-        <button 
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-[#2C1810] text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-[#402A20] transition-all active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Add New Material
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={handleSeed}
+            className="flex items-center justify-center gap-2 bg-white border-2 border-[#D4A574] text-[#B85C3E] px-6 py-3 rounded-2xl font-bold hover:bg-[#FDF8F3] transition-all active:scale-95"
+          >
+            <Sparkles className="w-5 h-5" />
+            Seed Demo Data
+          </button>
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center justify-center gap-2 bg-[#2C1810] text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-[#402A20] transition-all active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            Add New Material
+          </button>
+        </div>
       </div>
 
       {success && (
@@ -242,7 +266,7 @@ export default function InventoryPage() {
                     Activity Logs
                   </h4>
                   <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#D4A574] scrollbar-track-transparent">
-                    {logs?.map((log) => (
+                    {(logs ?? []).map((log) => (
                       <div key={log.id} className="p-4 bg-[#FBF8F3] rounded-2xl border border-[#E8DCC8]/50">
                         <div className="flex justify-between items-center mb-2">
                           <span className={`font-black text-sm ${Number(log.changeAmount) > 0 ? "text-green-600" : "text-red-600"}`}>
