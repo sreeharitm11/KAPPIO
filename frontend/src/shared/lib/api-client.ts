@@ -78,17 +78,25 @@ export async function apiRequest<T>(
     }
   }
 
-  const body = (await response.json().catch(() => null)) as ApiEnvelope<T> | {
-    message?: string | string[];
-  } | null;
+  const responseText = await response.text();
+  let body: any = null;
+  try {
+    body = JSON.parse(responseText);
+  } catch (e) {
+    // Not JSON
+  }
 
   if (!response.ok) {
     const rawMessage = body && 'message' in body ? body.message : 'Request failed';
-    const message = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage ?? 'Request failed';
+    const message = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage ?? `Server error (${response.status})`;
     throw new ApiError(message, response.status);
   }
 
-  return (body as ApiEnvelope<T>).data;
+  if (!body || !('data' in body)) {
+    throw new ApiError('Invalid response format from server');
+  }
+
+  return body.data;
 }
 
 export async function downloadWithAuth(path: string) {
