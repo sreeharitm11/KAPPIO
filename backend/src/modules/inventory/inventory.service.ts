@@ -94,63 +94,83 @@ export class InventoryService {
   }
 
   async seedInventory(): Promise<string> {
-    const rawMaterials = [
-      { name: 'Coffee Beans', unit: 'gm', currentStock: '5000', lowStockThreshold: '1000' },
-      { name: 'Milk', unit: 'ml', currentStock: '10000', lowStockThreshold: '2000' },
-      { name: 'Sugar', unit: 'gm', currentStock: '2000', lowStockThreshold: '500' },
-      { name: 'Chicken Breast', unit: 'gm', currentStock: '3000', lowStockThreshold: '1000' },
-      { name: 'Burger Buns', unit: 'pcs', currentStock: '50', lowStockThreshold: '10' },
-      { name: 'Cheese Slices', unit: 'pcs', currentStock: '100', lowStockThreshold: '20' },
-      { name: 'Avocado', unit: 'pcs', currentStock: '20', lowStockThreshold: '5' },
-      { name: 'Potato (Fries)', unit: 'gm', currentStock: '10000', lowStockThreshold: '2000' },
+    // 1. Create Categories
+    const catRepo = this.dataSource.getRepository(Category);
+    const cats = [
+      { name: 'Artisan Coffee', description: 'Freshly roasted small-batch brews' },
+      { name: 'Fresh Bites', description: 'Handcrafted snacks and pastries' },
+      { name: 'Refreshments', description: 'Cool drinks and blends' },
     ];
-
-    const savedIngredients: Record<string, Ingredient> = {};
-    for (const raw of rawMaterials) {
-      let ing = await this.ingredientRepo.findOne({ where: { name: raw.name } });
-      if (!ing) {
-        ing = await this.ingredientRepo.save(this.ingredientRepo.create(raw));
-      }
-      savedIngredients[raw.name] = ing;
+    const savedCats: Record<string, Category> = {};
+    for (const c of cats) {
+      let existing = await catRepo.findOne({ where: { name: c.name } });
+      if (!existing) existing = await catRepo.save(catRepo.create(c));
+      savedCats[c.name] = existing;
     }
 
-    const menuItems = await this.dataSource.getRepository(MenuItem).find();
-    let mappedCount = 0;
+    // 2. Create Ingredients
+    const rawMaterials = [
+      { name: 'Coffee Beans', unit: 'gm', currentStock: '5000', lowStockThreshold: '1000' },
+      { name: 'Whole Milk', unit: 'ml', currentStock: '10000', lowStockThreshold: '2000' },
+      { name: 'Chocolate Sauce', unit: 'ml', currentStock: '2000', lowStockThreshold: '500' },
+      { name: 'Flour', unit: 'gm', currentStock: '10000', lowStockThreshold: '2000' },
+      { name: 'Butter', unit: 'gm', currentStock: '5000', lowStockThreshold: '1000' },
+    ];
+    const savedIngs: Record<string, Ingredient> = {};
+    for (const r of rawMaterials) {
+      let existing = await this.ingredientRepo.findOne({ where: { name: r.name } });
+      if (!existing) existing = await this.ingredientRepo.save(this.ingredientRepo.create(r));
+      savedIngs[r.name] = existing;
+    }
 
-    for (const item of menuItems) {
-      const name = item.name.toLowerCase();
-      const mappings: any[] = [];
+    // 3. Create Menu Items
+    const menuRepo = this.dataSource.getRepository(MenuItem);
+    const items = [
+      { 
+        name: 'Double Espresso', 
+        description: 'Rich and intense classic shot', 
+        price: '180.00', 
+        categoryId: savedCats['Artisan Coffee'].id,
+        imageUrl: 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400',
+        mappings: [{ name: 'Coffee Beans', qty: '18' }]
+      },
+      { 
+        name: 'Classic Latte', 
+        description: 'Creamy milk poured over espresso', 
+        price: '240.00', 
+        categoryId: savedCats['Artisan Coffee'].id,
+        imageUrl: 'https://images.unsplash.com/photo-1536939459926-301728717817?w=400',
+        mappings: [{ name: 'Coffee Beans', qty: '18' }, { name: 'Whole Milk', qty: '200' }]
+      },
+      { 
+        name: 'Butter Croissant', 
+        description: 'Flaky, buttery French pastry', 
+        price: '120.00', 
+        categoryId: savedCats['Fresh Bites'].id,
+        imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400',
+        mappings: [{ name: 'Flour', qty: '50' }, { name: 'Butter', qty: '30' }]
+      },
+    ];
 
-      if (name.includes('espresso')) {
-        mappings.push({ ingredientId: savedIngredients['Coffee Beans'].id, quantityNeeded: '18' });
-      } else if (name.includes('latte') || name.includes('cappuccino') || name.includes('coffee')) {
-        mappings.push({ ingredientId: savedIngredients['Coffee Beans'].id, quantityNeeded: '18' });
-        mappings.push({ ingredientId: savedIngredients['Milk'].id, quantityNeeded: '200' });
-      } else if (name.includes('burger')) {
-        mappings.push({ ingredientId: savedIngredients['Burger Buns'].id, quantityNeeded: '1' });
-        mappings.push({ ingredientId: savedIngredients['Cheese Slices'].id, quantityNeeded: '1' });
-        if (name.includes('chicken')) {
-          mappings.push({ ingredientId: savedIngredients['Chicken Breast'].id, quantityNeeded: '150' });
-        }
-      } else if (name.includes('fries')) {
-        mappings.push({ ingredientId: savedIngredients['Potato (Fries)'].id, quantityNeeded: '200' });
-      } else if (name.includes('avocado')) {
-        mappings.push({ ingredientId: savedIngredients['Avocado'].id, quantityNeeded: '0.5' });
-      }
-
-      for (const m of mappings) {
-        const existing = await this.mappingRepo.findOne({ where: { menuItemId: item.id, ingredientId: m.ingredientId } });
-        if (!existing) {
+    let itemsCreated = 0;
+    for (const i of items) {
+      let item = await menuRepo.findOne({ where: { name: i.name } });
+      if (!item) {
+        const { mappings: itemMappings, ...itemData } = i;
+        item = await menuRepo.save(menuRepo.create(itemData));
+        itemsCreated++;
+        
+        for (const m of itemMappings) {
           await this.mappingRepo.save(this.mappingRepo.create({
             menuItemId: item.id,
-            ...m
+            ingredientId: savedIngs[m.name].id,
+            quantityNeeded: m.qty
           }));
         }
       }
-      if (mappings.length > 0) mappedCount++;
     }
 
-    return `Inventory seeded. Mapped ${mappedCount} menu items.`;
+    return `System Seeded: ${itemsCreated} new menu items created with inventory mappings.`;
   }
 
   async findAllIngredients() {
