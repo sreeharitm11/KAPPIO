@@ -33,11 +33,8 @@ export class AuthCookiesService {
       604800,
     );
 
-    const secure = this.configService.get<string>('AUTH_COOKIE_SECURE') === 'true' || this.isProduction;
-    const sameSite = (this.configService.get<string>('AUTH_COOKIE_SAMESITE') ?? 'lax') as
-      | 'lax'
-      | 'strict'
-      | 'none';
+    const secure = true; // Required for cross-domain cookies
+    const sameSite = 'none'; // Required for cross-domain cookies (vercel.app <-> railway.app)
 
     const base = {
       httpOnly: true,
